@@ -86,7 +86,11 @@ def list_ifaces():
 
         out = OrderedDict()
         for port in QtSerialPort.QSerialPortInfo.availablePorts():
-            out[port.description()] = port.systemLocation()
+            if sys.platform == 'darwin':
+                if 'tty' in port.systemLocation():
+                    out[port.systemLocation()] = port.systemLocation()
+            else:
+                out[port.description()] = port.systemLocation()
 
         return out
 
