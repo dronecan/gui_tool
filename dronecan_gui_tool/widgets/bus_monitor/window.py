@@ -83,12 +83,12 @@ def colorize_can_id(frame):
     return col
 
 
-def colorize_transfer_id(e):
-    if len(e[1].data) < 1:
+def colorize_transfer_id(frame):
+    if len(frame.data) < 1:
         return
 
     # Making a rather haphazard hash using transfer ID and a part of CAN ID
-    x = (e[1].data[-1] & 0b11111) | (((e[1].id >> 16) & 0b1111) << 5)
+    x = (frame.data[-1] & 0b11111) | (((frame.id >> 16) & 0b1111) << 5)
     red = ((x >> 6) & 0b111) * 25
     green = ((x >> 3) & 0b111) * 25
     blue = (x & 0b111) * 25
@@ -97,6 +97,30 @@ def colorize_transfer_id(e):
     col.setRgb(0xFF - red, 0xFF - green, 0xFF - blue)
     return col
 
+
+def formatted_data(frame):
+    fmt_data = ''
+    data_len = len(frame.data)
+    for i in range(int(data_len/8)+1):
+        beg = i*8
+        end = min((i+1)*8, data_len)
+        fmt_data = "\n".join([fmt_data, ' '.join(['%02X' % x for x in frame.data[beg:end]])])
+
+    fmt_data = fmt_data[1:]
+    return fmt_data.ljust(3 * 8), colorize_transfer_id(frame)
+
+
+def formatted_ascii(frame):
+    fmt_data = ''
+    data_len = len(frame.data)
+    for i in range(int(data_len/8)+1):
+        beg = i*8
+        end = min((i+1)*8, data_len)
+        fmt_data = "\n".join([fmt_data, 
+                    ''.join([(chr(x) if 32 <= x <= 126 else '.') for x in frame.data[beg:end]])])
+
+    fmt_data = fmt_data[1:]
+    return fmt_data, colorize_transfer_id(frame)
 
 class TimestampRenderer:
     FORMAT = '%H:%M:%S.%f'
@@ -180,11 +204,9 @@ COLUMNS = [
                       lambda e: (('%0*X' % (8 if e[1].extended else 3, e[1].id)).rjust(8),
                                  colorize_can_id(e[1]))),
     BasicTable.Column('Data Hex',
-                      lambda e: (' '.join(['%02X' % x for x in e[1].data]).ljust(3 * e[1].MAX_DATA_LENGTH),
-                                 colorize_transfer_id(e))),
+                      lambda e: formatted_data(e[1])),
     BasicTable.Column('Data ASCII',
-                      lambda e: (''.join([(chr(x) if 32 <= x <= 126 else '.') for x in e[1].data]),
-                                 colorize_transfer_id(e))),
+                      lambda e: formatted_ascii(e[1])),
     BasicTable.Column('Src',
                       lambda e: render_node_id_with_color(e[1], 'src')),
     BasicTable.Column('Dst',
@@ -235,7 +257,7 @@ class BusMonitorWindow(QMainWindow):
         self._get_frame = get_frame
 
         self._log_widget = RealtimeLogWidget(self, columns=COLUMNS, font=get_monospace_font(),
-                                             pre_redraw_hook=self._redraw_hook)
+                                             pre_redraw_hook=self._redraw_hook, multi_line_rows=True)
         self._log_widget.on_selection_changed = self._update_measurement_display
 
         self._log_widget.table.cellClicked.connect(lambda row, col: self._decode_transfer_at_row(row))
