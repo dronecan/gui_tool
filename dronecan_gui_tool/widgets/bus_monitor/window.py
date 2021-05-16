@@ -200,6 +200,8 @@ COLUMNS = [
                       lambda e: (e[0].upper()),
                       searchable=False),
     BasicTable.Column('Local Time', TimestampRenderer(), searchable=False),
+    BasicTable.Column('Frame',
+                      lambda e: ('FD' if e[1].canfd else 'NFD')),
     BasicTable.Column('CAN ID',
                       lambda e: (('%0*X' % (8 if e[1].extended else 3, e[1].id)).rjust(8),
                                  colorize_can_id(e[1]))),
@@ -225,7 +227,7 @@ def row_to_frame(table, row_index):
     payload = None
     extended = None
     direction = None
-
+    canfd = False
     for col_index, col_spec in enumerate(COLUMNS):
         item = table.item(row_index, col_index).text()
         if col_spec.name == 'CAN ID':
@@ -235,9 +237,11 @@ def row_to_frame(table, row_index):
             payload = bytes([int(x, 16) for x in item.split()])
         if col_spec.name == 'Dir':
             direction = item.strip()
+        if col_spec.name == 'Frame':
+            canfd = (True if item.strip() == 'FD' else False)
 
     assert all(map(lambda x: x is not None, [can_id, payload, extended, direction]))
-    return CANFrame(can_id, payload, extended, ts_monotonic=-1, ts_real=-1), direction
+    return CANFrame(can_id, payload, extended, ts_monotonic=-1, ts_real=-1, canfd=canfd), direction
 
 
 class BusMonitorWindow(QMainWindow):

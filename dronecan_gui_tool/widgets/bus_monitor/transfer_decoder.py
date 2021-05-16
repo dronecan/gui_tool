@@ -64,6 +64,6 @@ def decode_transfer_from_frame(entry_row, row_to_frame):
 
     # The transfer is now fully recovered
     tr = Transfer()
-    tr.from_frames([Frame(x.id, x.data) for x in frames])
+    tr.from_frames([Frame(x.id, x.data, canfd=x.canfd) for x in frames])
 
     return related_rows, dronecan.to_yaml(tr.payload)
