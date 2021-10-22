@@ -9,7 +9,7 @@
 import os
 import sys
 import queue
-import pyuavcan_v0
+import dronecan
 import logging
 import multiprocessing
 from PyQt5.QtWidgets import QApplication
@@ -86,27 +86,27 @@ def _process_entry_point(channel):
 
 class CompactMessage:
     """
-    Transfer and message objects from Pyuavcan cannot be exchanged between processes,
-    so we build this minimal representation that is just enough to mimic a Pyuavcan message object.
+    Transfer and message objects from Pydronecan cannot be exchanged between processes,
+    so we build this minimal representation that is just enough to mimic a Pydronecan message object.
     """
-    def __init__(self, uavcan_data_type_name):
-        self._uavcan_data_type_name = uavcan_data_type_name
+    def __init__(self, dronecan_data_type_name):
+        self._dronecan_data_type_name = dronecan_data_type_name
         self._fields = {}
 
     def __repr__(self):
-        return '%s(%r)' % (self._uavcan_data_type_name, self._fields)
+        return '%s(%r)' % (self._dronecan_data_type_name, self._fields)
 
     def _add_field(self, name, value):
         self._fields[name] = value
 
     def __getattr__(self, item):
-        if item not in ('_fields', '_uavcan_data_type_name'):
+        if item not in ('_fields', '_dronecan_data_type_name'):
             try:
                 return self._fields[item]
             except KeyError:
                 pass
             try:
-                return getattr(pyuavcan_v0.TYPENAMES[self._uavcan_data_type_name](), item)
+                return getattr(dronecan.TYPENAMES[self._dronecan_data_type_name](), item)
             except KeyError:
                 pass
         raise AttributeError(item)
@@ -114,25 +114,25 @@ class CompactMessage:
 
 # noinspection PyProtectedMember
 def _extract_struct_fields(m):
-    if isinstance(m, pyuavcan_v0.transport.CompoundValue):
-        out = CompactMessage(pyuavcan_v0.get_uavcan_data_type(m).full_name)
-        for field_name, field in pyuavcan_v0.get_fields(m).items():
-            if pyuavcan_v0.is_union(m) and pyuavcan_v0.get_active_union_field(m) != field_name:
+    if isinstance(m, dronecan.transport.CompoundValue):
+        out = CompactMessage(dronecan.get_dronecan_data_type(m).full_name)
+        for field_name, field in dronecan.get_fields(m).items():
+            if dronecan.is_union(m) and dronecan.get_active_union_field(m) != field_name:
                 continue
             val = _extract_struct_fields(field)
             if val is not None:
                 out._add_field(field_name, val)
         return out
-    elif isinstance(m, pyuavcan_v0.transport.ArrayValue):
+    elif isinstance(m, dronecan.transport.ArrayValue):
         # cannot say I'm breaking the rules
-        container = bytes if pyuavcan_v0.get_uavcan_data_type(m).is_string_like else list
+        container = bytes if dronecan.get_dronecan_data_type(m).is_string_like else list
         # if I can glue them back together
         return container(filter(lambda x: x is not None, (_extract_struct_fields(item) for item in m)))
-    elif isinstance(m, pyuavcan_v0.transport.PrimitiveValue):
+    elif isinstance(m, dronecan.transport.PrimitiveValue):
         return m.value
     elif isinstance(m, (int, float, bool)):
         return m
-    elif isinstance(m, pyuavcan_v0.transport.VoidValue):
+    elif isinstance(m, dronecan.transport.VoidValue):
         pass
     else:
         raise ValueError(':(')
@@ -142,7 +142,7 @@ class MessageTransfer:
     def __init__(self, tr):
         self.source_node_id = tr.source_node_id
         self.ts_mono = tr.ts_monotonic
-        self.data_type_name = pyuavcan_v0.get_uavcan_data_type(tr.payload).full_name
+        self.data_type_name = dronecan.get_dronecan_data_type(tr.payload).full_name
         self.message = _extract_struct_fields(tr.payload)
 
 

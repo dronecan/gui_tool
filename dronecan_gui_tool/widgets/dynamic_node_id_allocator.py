@@ -6,7 +6,7 @@
 # Author: Pavel Kirienko <pavel.kirienko@zubax.com>
 #
 
-import pyuavcan_v0
+import dronecan
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QHeaderView, QPushButton, QFileDialog, \
     QCompleter, QDirModel
 from PyQt5.QtCore import QTimer
@@ -34,7 +34,7 @@ class DynamicNodeIDAllocatorWidget(QGroupBox):
 
     def __init__(self, parent, node, node_monitor):
         super(DynamicNodeIDAllocatorWidget, self).__init__(parent)
-        self.setTitle('Dynamic node ID allocation server (uavcan.protocol.dynamic_node_id.*)')
+        self.setTitle('Dynamic node ID allocation server (dronecan.protocol.dynamic_node_id.*)')
 
         self._node = node
         self._node_monitor = node_monitor
@@ -105,7 +105,7 @@ class DynamicNodeIDAllocatorWidget(QGroupBox):
         else:
             try:
                 db_file = self._database_file.currentText()
-                self._allocator = pyuavcan_v0.app.dynamic_node_id.CentralizedServer(self._node, self._node_monitor,
+                self._allocator = dronecan.app.dynamic_node_id.CentralizedServer(self._node, self._node_monitor,
                                                                                database_storage=db_file)
             except Exception as ex:
                 show_error('Error', 'Could not start allocator', str(ex), parent=self)

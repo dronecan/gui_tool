@@ -223,8 +223,8 @@ class ConsoleManager:
         for obj in self._context:
             banner += '\t%- *s -> %s\n' % (longest_name, obj.name, obj.usage_info)
 
-        banner += 'Pyuavcan docs:  http://uavcan.org/Implementations/Pyuavcan\n'
-        banner += 'DSDL reference: http://uavcan.org/Specification/7._List_of_standard_data_types\n'
+        banner += 'Pydronecan docs:  http://dronecan.org/Implementations/Pydronecan\n'
+        banner += 'DSDL reference: http://dronecan.org/Specification/7._List_of_standard_data_types\n'
         return banner
 
     def show_console_window(self, parent):

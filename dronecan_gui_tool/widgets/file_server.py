@@ -6,7 +6,7 @@
 # Author: Pavel Kirienko <pavel.kirienko@zubax.com>
 #
 
-import pyuavcan_v0
+import dronecan
 import os
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QWidget, QDirModel, QCompleter, QFileDialog, QLabel
 from PyQt5.QtCore import QTimer
@@ -85,7 +85,7 @@ class PathItem(QWidget):
 class FileServerWidget(QGroupBox):
     def __init__(self, parent, node):
         super(FileServerWidget, self).__init__(parent)
-        self.setTitle('File server (uavcan.protocol.file.*)')
+        self.setTitle('File server (dronecan.protocol.file.*)')
 
         self._node = node
         self._file_server = None
@@ -147,7 +147,7 @@ class FileServerWidget(QGroupBox):
             self._file_server = None
             logger.info('File server stopped')
         else:
-            self._file_server = pyuavcan_v0.app.file_server.FileServer(self._node)
+            self._file_server = dronecan.app.file_server.FileServer(self._node)
             self._sync_paths()
 
     def _on_remove_path(self, path):

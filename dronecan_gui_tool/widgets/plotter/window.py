@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class PlotterWindow(QMainWindow):
     def __init__(self, get_transfer_callback):
         super(PlotterWindow, self).__init__()
-        self.setWindowTitle('UAVCAN Plotter')
+        self.setWindowTitle('DroneCAN Plotter')
         self.setWindowIcon(get_app_icon())
 
         self._active_data_types = set()

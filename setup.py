@@ -15,8 +15,8 @@ import glob
 from setuptools import setup, find_packages
 from setuptools.archive_util import unpack_archive
 
-PACKAGE_NAME = 'uavcan_gui_tool'
-HUMAN_FRIENDLY_NAME = 'UAVCAN GUI Tool'
+PACKAGE_NAME = 'dronecan_gui_tool'
+HUMAN_FRIENDLY_NAME = 'DroneCAN GUI Tool'
 
 SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -50,7 +50,7 @@ args = dict(
     ],
     install_requires=[
         'setuptools>=18.5',
-        'pyuavcan_v0>=1.0.0.dev34',
+        'dronecan>=1.0.0',
         'pyserial~=3.0',
         'qtawesome~=0.3.1',
         'qtconsole~=4.2.0',
@@ -62,7 +62,8 @@ args = dict(
         'jupyter-client',
         'ipykernel',
         'pygments',
-        'qtpy'
+        'qtpy',
+        'pyqtgraph'
     ],
     # We can't use "scripts" here, because generated shims don't work with multiprocessing pickler.
     entry_points={
@@ -73,10 +74,10 @@ args = dict(
     include_package_data=True,
 
     # Meta fields, they have no technical meaning
-    description='UAVCAN Bus Management and Diagnostics App',
-    author='UAVCAN Development Team',
-    author_email='uavcan@googlegroups.com',
-    url='http://uavcan.org',
+    description='DroneCAN Bus Management and Diagnostics App',
+    author='DroneCAN Development Team',
+    author_email='dronecan.devel@gmail.com',
+    url='http://dronecan.org',
     license='MIT',
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -136,7 +137,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
 
     # cx_Freeze can't handle 3rd-party packages packed in .egg files, so we have to extract them for it
     dependency_eggs_to_unpack = [
-        'uavcan',
+        'dronecan',
         'qtpy',
         'qtconsole',
     ]
@@ -192,7 +193,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
             ] + missing_dlls,
         },
         'bdist_msi': {
-            'initial_target_dir': '[ProgramFilesFolder]\\UAVCAN\\' + HUMAN_FRIENDLY_NAME,
+            'initial_target_dir': '[ProgramFilesFolder]\\DroneCAN\\' + HUMAN_FRIENDLY_NAME,
         },
     }
     args['executables'] = [

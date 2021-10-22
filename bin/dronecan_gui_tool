@@ -57,5 +57,5 @@ except NameError:
 #
 if __name__ == '__main__':
     multiprocessing.freeze_support()
-    from uavcan_gui_tool.main import main
+    from dronecan_gui_tool.main import main
     main()

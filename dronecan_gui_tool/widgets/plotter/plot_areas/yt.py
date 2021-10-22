@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016  UAVCAN Development Team  <uavcan.org>
+# Copyright (C) 2016  UAVCAN Development Team  <dronecan.org>
 #
 # This software is distributed under the terms of the MIT License.
 #
@@ -10,7 +10,7 @@ import logging
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
-from ....thirdparty.pyqtgraph import PlotWidget, mkPen
+from pyqtgraph import PlotWidget, mkPen
 from . import AbstractPlotArea, add_crosshair
 from ... import make_icon_button
 

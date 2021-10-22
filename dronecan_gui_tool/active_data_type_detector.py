@@ -7,7 +7,7 @@
 #
 
 import logging
-import pyuavcan_v0
+import dronecan
 from PyQt5.QtCore import pyqtSignal, QObject
 
 
@@ -34,12 +34,12 @@ class ActiveDataTypeDetector(QObject):
 
     def _on_transfer(self, tr):
         try:
-            dtname = pyuavcan_v0.get_uavcan_data_type(tr.payload).full_name
+            dtname = dronecan.get_dronecan_data_type(tr.payload).full_name
         except Exception:
             try:
-                kind = pyuavcan_v0.dsdl.CompoundType.KIND_SERVICE if tr.service_not_message else \
-                    pyuavcan_v0.dsdl.CompoundType.KIND_MESSAGE
-                dtname = pyuavcan_v0.DATATYPES[(tr.data_type_id, kind)].full_name
+                kind = dronecan.dsdl.CompoundType.KIND_SERVICE if tr.service_not_message else \
+                    dronecan.dsdl.CompoundType.KIND_MESSAGE
+                dtname = dronecan.DATATYPES[(tr.data_type_id, kind)].full_name
             except Exception:
                 logger.error('Could not detect data type name from transfer %r', tr, exc_info=True)
                 return
@@ -62,7 +62,7 @@ class ActiveDataTypeDetector(QObject):
     @staticmethod
     def get_names_of_all_message_types_with_data_type_id():
         message_types = []
-        for (dtid, kind), dtype in pyuavcan_v0.DATATYPES.items():
-            if dtid is not None and kind == pyuavcan_v0.dsdl.CompoundType.KIND_MESSAGE:
+        for (dtid, kind), dtype in dronecan.DATATYPES.items():
+            if dtid is not None and kind == dronecan.dsdl.CompoundType.KIND_MESSAGE:
                 message_types.append(str(dtype))
         return list(sorted(message_types))

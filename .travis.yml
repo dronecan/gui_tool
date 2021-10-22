@@ -11,6 +11,6 @@ deploy:
     secure: oX7kxpjb/C1PjeYl3kUWoynCjE7XvcR6nlvXHtRv4X9Jja8EIS4SgYxb1+d6yYI5eCDhyC6q5eMwFVcaAGOw6THnZ3Nx6saYBZf91fdSMWOhvOfqrsS7SkK7WEa2+XO9t7fBDZ3/kPo+3N6Aowv3tG7NUo30n+3qx2CfaJN60mNRCmoQjlUi34M19macOClAJ592PsZQIKZUX6aHvjwdNDbGq8qmkMCV/6P7wWlA0RezwematVVevzV72tncch5KPPPPXaSXbranQG+KM+SKR8ry0i+W+5HS+9oD94KhhLuzIXi+ZlKvLW7Ijg/KETalQWvYAREx9Ud05fscIcPOMx2TAuGGUyqmPX5W5xL5mQemTnnmGsWz5QPnfpB44CjTDRvhfUhHRAaNsi+e1AaKVOFBZClNCIEt6TJivrDhLT9zruDb6KGfari94S1jxQilHCG2pJb+wiOLjn/NXYtsxFZH02gSxRVs1NaNSHyFHZYmrlgZ6CikLzYMPliES8rTnH4CIDg/3HvHbOK+44TGtHyQhL6da4OAzl0xWEJksYbJ4Kk8anCIMl9qEmMJbLzGPGYUvbmsSRe9SICG44+bzoGlyBUpzgcUbOL83X5JU5Bor4iHyCk7u2xwGOhZjtzKgX4/NOsf9j157JB5AEfyvnjutVYqKFJ3Ffonrrqr6kU=
   on:
     tags: true
-    repo: UAVCAN/gui_tool
+    repo: DroneCAN/gui_tool
   distributions: bdist_wheel
   skip_cleanup: true

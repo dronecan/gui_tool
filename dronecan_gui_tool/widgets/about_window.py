@@ -6,7 +6,7 @@
 # Author: Pavel Kirienko <pavel.kirienko@zubax.com>
 #
 
-import pyuavcan_v0
+import dronecan
 from ..version import __version__
 from . import get_icon, get_app_icon
 from PyQt5.QtWidgets import QDialog, QTableWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
@@ -16,16 +16,17 @@ from PyQt5.QtCore import Qt, PYQT_VERSION_STR, QSize
 
 
 ABOUT_TEXT = ('''
-<h3>UAVCAN GUI Tool v{0}</h3>
-Cross-platform application for <a href="http://uavcan.org/">UAVCAN bus</a> management and diagnostics.
+<h3>DroneCAN GUI Tool v{0}</h3>
+Cross-platform application for <a href="http://dronecan.org/">DroneCAN bus</a> management and diagnostics.
 
 This application is distributed under the terms of the MIT software license. The source repository and the bug \
-tracker are located at <a href="https://github.com/UAVCAN/gui_tool">https://github.com/UAVCAN/gui_tool</a>.
+tracker are located at <a href="https://github.com/DroneCAN/gui_tool">https://github.com/DroneCAN/gui_tool</a>.
 '''.format('.'.join(map(str, __version__)))).strip().replace('\n', '\n<br/>')
 
 
 def _list_3rd_party():
-    from ..thirdparty import pyqtgraph
+    #from ..thirdparty 
+    import pyqtgraph
     import qtawesome
 
     try:
@@ -36,7 +37,7 @@ def _list_3rd_party():
         ipython_version = 'N/A'
 
     return [
-        ('PyUAVCAN',    uavcan.__version__,     'MIT',      'http://uavcan.org/Implementations/Pyuavcan'),
+        ('PyDroneCAN',    dronecan.__version__,     'MIT',      'http://dronecan.org/Implementations/Pydronecan'),
         ('PyQt5',       PYQT_VERSION_STR,       'GPLv3',    'https://www.riverbankcomputing.com/software/pyqt/intro'),
         ('PyQtGraph',   pyqtgraph.__version__,  'MIT',      'http://www.pyqtgraph.org/'),
         ('QtAwesome',   qtawesome.__version__,  'MIT',      'https://github.com/spyder-ide/qtawesome'),
@@ -49,7 +50,7 @@ class AboutWindow(QDialog):
     def __init__(self, parent):
         super(AboutWindow, self).__init__(parent)
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.setWindowTitle('About UAVCAN GUI Tool')
+        self.setWindowTitle('About DroneCAN GUI Tool')
 
         #
         # Icon

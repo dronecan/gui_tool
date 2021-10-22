@@ -43,7 +43,7 @@ def _do_windows_check():
     import easywebdav
 
     hostname = 'files.zubax.com'
-    directory = 'products/org.uavcan.gui_tool'
+    directory = 'products/org.dronecan.gui_tool'
     # Some people, when confronted with a problem, think: "I know, I WON'T use regular expressions."
     # Now they have two problems.
     regex = r'(?i).*?gui.?tool.+?(\d+\.\d+).*?\.\w\w\w$'
@@ -74,7 +74,7 @@ def _do_windows_check():
 
 
 def _do_pip_check():
-    request = urllib.request.Request('https://api.github.com/repos/UAVCAN/gui_tool/tags',
+    request = urllib.request.Request('https://api.github.com/repos/DroneCAN/gui_tool/tags',
                                      headers={
                                          'Accept': 'application/vnd.github.v3+json',
                                      })
@@ -92,7 +92,7 @@ def _do_pip_check():
     logger.debug('Parsed version tuple: %r', version_tuple)
 
     if _version_tuple_to_int(version_tuple) > _version_tuple_to_int(__version__):
-        git_url = 'https://github.com/UAVCAN/gui_tool'
+        git_url = 'https://github.com/DroneCAN/gui_tool'
         return 'pip3 install --upgrade git+<a href="{0}">{0}</a>@{1}'.format(git_url, newest_tag_name)
 
 
@@ -100,7 +100,7 @@ def _do_pip_check():
 def _should_continue():
     min_check_interval = 3600 * 24
 
-    update_timestamp_file = os.path.join(tempfile.gettempdir(), 'uavcan_gui_tool', 'update_check_timestamp')
+    update_timestamp_file = os.path.join(tempfile.gettempdir(), 'dronecan_gui_tool', 'update_check_timestamp')
 
     try:
         with open(update_timestamp_file, 'r') as f:

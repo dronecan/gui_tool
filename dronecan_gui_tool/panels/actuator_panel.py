@@ -6,7 +6,7 @@
 # Author: Tom Pittenger <magicrub@gmail.com>
 #
 
-import pyuavcan_v0
+import dronecan
 from functools import partial
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, QSlider, QSpinBox, QDoubleSpinBox, QCheckBox, \
     QPlainTextEdit
@@ -153,19 +153,19 @@ class ActuatorPanel(QDialog):
     def _do_broadcast(self):
         try:
             if not self._pause.isChecked():
-#                msg = pyuavcan_v0.equipment.esc.RawCommand()
-                msg = pyuavcan_v0.equipment.actuator.ArrayCommand()
+#                msg = dronecan.equipment.esc.RawCommand()
+                msg = dronecan.equipment.actuator.ArrayCommand()
                 for sl in self._sliders:
                     if sl.is_enabled() == False:
                         continue
-                    msg_cmd = pyuavcan_v0.equipment.actuator.Command()
+                    msg_cmd = dronecan.equipment.actuator.Command()
                     msg_cmd.actuator_id = sl.get_actuator_id()
                     msg_cmd.command_value = sl.get_value()
                     msg_cmd.command_type = 0
                     msg.commands.append(msg_cmd)
 
                 self._node.broadcast(msg)
-                self._msg_viewer.setPlainText(pyuavcan_v0.to_yaml(msg))
+                self._msg_viewer.setPlainText(dronecan.to_yaml(msg))
             else:
                 self._msg_viewer.setPlainText('Paused')
         except Exception as ex:

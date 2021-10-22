@@ -6,7 +6,7 @@
 # Author: Pavel Kirienko <pavel.kirienko@zubax.com>
 #
 
-import pyuavcan_v0
+import dronecan
 from functools import partial
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, QSlider, QSpinBox, QDoubleSpinBox, \
     QPlainTextEdit
@@ -66,7 +66,7 @@ class PercentSlider(QWidget):
 class ESCPanel(QDialog):
     DEFAULT_INTERVAL = 0.1
 
-    CMD_BIT_LENGTH = pyuavcan_v0.get_uavcan_data_type(pyuavcan_v0.equipment.esc.RawCommand().cmd).value_type.bitlen
+    CMD_BIT_LENGTH = dronecan.get_dronecan_data_type(dronecan.equipment.esc.RawCommand().cmd).value_type.bitlen
     CMD_MAX = 2 ** (CMD_BIT_LENGTH - 1) - 1
     CMD_MIN = -(2 ** (CMD_BIT_LENGTH - 1))
 
@@ -137,14 +137,14 @@ class ESCPanel(QDialog):
     def _do_broadcast(self):
         try:
             if not self._pause.isChecked():
-                msg = pyuavcan_v0.equipment.esc.RawCommand()
+                msg = dronecan.equipment.esc.RawCommand()
                 for sl in self._sliders:
                     raw_value = sl.get_value() / 100
                     value = (-self.CMD_MIN if raw_value < 0 else self.CMD_MAX) * raw_value
                     msg.cmd.append(int(value))
 
                 self._node.broadcast(msg)
-                self._msg_viewer.setPlainText(pyuavcan_v0.to_yaml(msg))
+                self._msg_viewer.setPlainText(dronecan.to_yaml(msg))
             else:
                 self._msg_viewer.setPlainText('Paused')
         except Exception as ex:

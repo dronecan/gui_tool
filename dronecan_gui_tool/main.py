@@ -16,12 +16,20 @@ import tempfile
 assert sys.version[0] == '3'
 
 from argparse import ArgumentParser
-parser = ArgumentParser(description='UAVCAN GUI tool')
+parser = ArgumentParser(description='DroneCAN GUI tool')
 
 parser.add_argument("--debug", action='store_true', help="enable debugging")
 parser.add_argument("--dsdl", help="path to custom DSDL")
 
 args = parser.parse_args()
+
+
+if __name__ == '__main__' and not __package__:
+    print("blerggggggg")
+    import sys
+    sys.path.insert(0, 'dronecan_gui_tool/thirdparty/')
+    sys.path.insert(0, 'dronecan_gui_tool/')
+    __package__ = 'fff.obng'
 
 #
 # Configuring logging before other packages are imported
@@ -34,7 +42,7 @@ else:
 logging.basicConfig(stream=sys.stderr, level=logging_level,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 
-log_file = tempfile.NamedTemporaryFile(mode='w', prefix='uavcan_gui_tool-', suffix='.log', delete=False)
+log_file = tempfile.NamedTemporaryFile(mode='w', prefix='dronecan_gui_tool-', suffix='.log', delete=False)
 file_handler = logging.FileHandler(log_file.name)
 file_handler.setLevel(logging_level)
 file_handler.setFormatter(logging.Formatter('%(asctime)s [%(process)d] %(levelname)-8s %(name)-25s %(message)s'))
@@ -59,7 +67,7 @@ if multiprocessing.get_start_method(True) != 'spawn':
 #
 # Importing other stuff once the logging has been configured
 #
-import pyuavcan_v0
+import dronecan
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QSplitter, QAction
 from PyQt5.QtGui import QKeySequence, QDesktopServices
@@ -87,7 +95,7 @@ from .widgets.can_adapter_control_panel import spawn_window as spawn_can_adapter
 from .panels import PANELS
 
 
-NODE_NAME = 'org.pyuavcan_v0.gui_tool'
+NODE_NAME = 'org.dronecan.gui_tool'
 
 
 class MainWindow(QMainWindow):
@@ -97,7 +105,7 @@ class MainWindow(QMainWindow):
     def __init__(self, node, iface_name):
         # Parent
         super(MainWindow, self).__init__()
-        self.setWindowTitle('UAVCAN GUI Tool')
+        self.setWindowTitle('DroneCAN GUI Tool')
         self.setWindowIcon(get_app_icon())
 
         self._node = node
@@ -191,8 +199,8 @@ class MainWindow(QMainWindow):
         #
         # Help menu
         #
-        uavcan_website_action = QAction(get_icon('globe'), 'Open UAVCAN &Website', self)
-        uavcan_website_action.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('http://pyuavcan_v0.org')))
+        dronecan_website_action = QAction(get_icon('globe'), 'Open DroneCAN &Website', self)
+        dronecan_website_action.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('http://dronecan.org')))
 
         show_log_directory_action = QAction(get_icon('pencil-square-o'), 'Open &Log Directory', self)
         show_log_directory_action.triggered.connect(
@@ -202,7 +210,7 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(lambda: AboutWindow(self).show())
 
         help_menu = self.menuBar().addMenu('&Help')
-        help_menu.addAction(uavcan_website_action)
+        help_menu.addAction(dronecan_website_action)
         help_menu.addAction(show_log_directory_action)
         help_menu.addAction(about_action)
 
@@ -248,13 +256,13 @@ class MainWindow(QMainWindow):
 
         def print_yaml(obj):
             """
-            Formats the argument as YAML structure using pyuavcan_v0.to_yaml(), and prints the result into stdout.
-            Use this function to print received UAVCAN structures.
+            Formats the argument as YAML structure using dronecan.to_yaml(), and prints the result into stdout.
+            Use this function to print received DroneCAN structures.
             """
             if obj is None:
                 return
 
-            print(pyuavcan_v0.to_yaml(obj))
+            print(dronecan.to_yaml(obj))
 
         def throw_if_anonymous():
             if self._node.is_anonymous:
@@ -266,35 +274,35 @@ class MainWindow(QMainWindow):
             """
             Sends a service request to the specified node. This is a convenient wrapper over node.request().
             Args:
-                payload:        Request payload of type CompoundValue, e.g. pyuavcan_v0.protocol.GetNodeInfo.Request()
+                payload:        Request payload of type CompoundValue, e.g. dronecan.protocol.GetNodeInfo.Request()
                 server_node_id: Node ID of the node that will receive the request.
                 callback:       Response callback. Default handler will print the response to stdout in YAML format.
                 priority:       Transfer priority; defaults to a very low priority.
-                timeout:        Response timeout, default is set according to the UAVCAN specification.
+                timeout:        Response timeout, default is set according to the DroneCAN specification.
             """
-            if isinstance(payload, pyuavcan_v0.dsdl.CompoundType):
+            if isinstance(payload, dronecan.dsdl.CompoundType):
                 print('Interpreting the first argument as:', payload.full_name + '.Request()')
-                payload = pyuavcan_v0.TYPENAMES[payload.full_name].Request()
+                payload = dronecan.TYPENAMES[payload.full_name].Request()
             throw_if_anonymous()
             priority = priority or default_transfer_priority
             callback = callback or print_yaml
             return self._node.request(payload, server_node_id, callback, priority=priority, timeout=timeout)
 
-        def serve(uavcan_type, callback):
+        def serve(dronecan_type, callback):
             """
             Registers a service server. The callback will be invoked every time the local node receives a
-            service request of the specified type. The callback accepts an pyuavcan_v0.Event object
-            (refer to the PyUAVCAN documentation for more info), and returns the response object.
+            service request of the specified type. The callback accepts an dronecan.Event object
+            (refer to the PyDroneCAN documentation for more info), and returns the response object.
             Example:
                 >>> def serve_acs(e):
                 >>>     print_yaml(e.request)
-                >>>     return pyuavcan_v0.protocol.AccessCommandShell.Response()
-                >>> serve(pyuavcan_v0.protocol.AccessCommandShell, serve_acs)
+                >>>     return dronecan.protocol.AccessCommandShell.Response()
+                >>> serve(dronecan.protocol.AccessCommandShell, serve_acs)
             Args:
-                uavcan_type:    UAVCAN service type to serve requests of.
+                dronecan_type:    DroneCAN service type to serve requests of.
                 callback:       Service callback with the business logic, see above.
             """
-            if uavcan_type.kind != uavcan_type.KIND_SERVICE:
+            if dronecan_type.kind != dronecan_type.KIND_SERVICE:
                 raise RuntimeError('Expected a service type, got a different kind')
 
             def process_callback(e):
@@ -302,10 +310,10 @@ class MainWindow(QMainWindow):
                     return callback(e)
                 except Exception:
                     logger.error('Unhandled exception in server callback for %r, server terminated',
-                                 uavcan_type, exc_info=True)
+                                 dronecan_type, exc_info=True)
                     sub_handle.remove()
 
-            sub_handle = self._node.add_handler(uavcan_type, process_callback)
+            sub_handle = self._node.add_handler(dronecan_type, process_callback)
             active_handles.append(sub_handle)
             return sub_handle
 
@@ -316,13 +324,13 @@ class MainWindow(QMainWindow):
             more info. Multiple termination conditions will be joined with logical OR operation.
             Example:
                 # Send one message:
-                >>> broadcast(pyuavcan_v0.protocol.debug.KeyValue(key='key', value=123))
+                >>> broadcast(dronecan.protocol.debug.KeyValue(key='key', value=123))
                 # Repeat message every 100 milliseconds for 10 seconds:
-                >>> broadcast(pyuavcan_v0.protocol.NodeStatus(), interval=0.1, duration=10)
+                >>> broadcast(dronecan.protocol.NodeStatus(), interval=0.1, duration=10)
                 # Send 100 messages with 10 millisecond interval:
-                >>> broadcast(pyuavcan_v0.protocol.Panic(reason_text='42!'), interval=0.01, count=100)
+                >>> broadcast(dronecan.protocol.Panic(reason_text='42!'), interval=0.01, count=100)
             Args:
-                payload:    UAVCAN message structure, e.g. pyuavcan_v0.protocol.debug.KeyValue(key='key', value=123)
+                payload:    DroneCAN message structure, e.g. dronecan.protocol.debug.KeyValue(key='key', value=123)
                 priority:   Transfer priority; defaults to a very low priority.
                 interval:   Broadcasting interval in seconds.
                             If specified, the message will be re-published in the background with this interval.
@@ -340,9 +348,9 @@ class MainWindow(QMainWindow):
                         If no periodic broadcasting is configured, this function returns nothing.
             """
             # Validating inputs
-            if isinstance(payload, pyuavcan_v0.dsdl.CompoundType):
+            if isinstance(payload, dronecan.dsdl.CompoundType):
                 print('Interpreting the first argument as:', payload.full_name + '()')
-                payload = pyuavcan_v0.TYPENAMES[payload.full_name]()
+                payload = dronecan.TYPENAMES[payload.full_name]()
 
             if (interval is None) and (duration is not None or count is not None):
                 raise RuntimeError('Cannot setup background broadcaster: interval is not set')
@@ -372,18 +380,18 @@ class MainWindow(QMainWindow):
                         num_broadcasted += 1
                         if (count is not None and num_broadcasted >= count) or (time.monotonic() >= deadline):
                             logger.info('Background publisher for %r has stopped',
-                                        pyuavcan_v0.get_uavcan_data_type(payload).full_name)
+                                        dronecan.get_dronecan_data_type(payload).full_name)
                             timer_handle.remove()
 
                 timer_handle = self._node.periodic(interval, process_next)
                 active_handles.append(timer_handle)
                 return timer_handle
 
-        def subscribe(uavcan_type, callback=None, count=None, duration=None, on_end=None):
+        def subscribe(dronecan_type, callback=None, count=None, duration=None, on_end=None):
             """
-            Receives specified UAVCAN messages from the bus and delivers them to the callback.
+            Receives specified DroneCAN messages from the bus and delivers them to the callback.
             Args:
-                uavcan_type:    UAVCAN message type to listen for.
+                dronecan_type:    DroneCAN message type to listen for.
                 callback:       Callback will be invoked for every received message.
                                 Default callback will print the response to stdout in YAML format.
                 count:          Number of messages to receive before terminating the subscription.
@@ -397,7 +405,7 @@ class MainWindow(QMainWindow):
                 raise RuntimeError('on_end is set, but it will never be called because the subscription has '
                                    'no termination condition')
 
-            if uavcan_type.kind != uavcan_type.KIND_MESSAGE:
+            if dronecan_type.kind != dronecan_type.KIND_MESSAGE:
                 raise RuntimeError('Expected a message type, got a different kind')
 
             callback = callback or print_yaml
@@ -409,7 +417,7 @@ class MainWindow(QMainWindow):
                     callback(e)
                 except Exception:
                     logger.error('Unhandled exception in subscription callback for %r, subscription terminated',
-                                 uavcan_type, exc_info=True)
+                                 dronecan_type, exc_info=True)
                     stop_now = True
                 else:
                     if count is not None:
@@ -434,7 +442,7 @@ class MainWindow(QMainWindow):
                     if on_end is not None:
                         on_end()
 
-            sub_handle = self._node.add_handler(uavcan_type, process_callback)
+            sub_handle = self._node.add_handler(dronecan_type, process_callback)
             timer_handle = None
             if duration is not None:
                 timer_handle = self._node.defer(duration, cancel_callback)
@@ -483,17 +491,17 @@ class MainWindow(QMainWindow):
             InternalObjectDescriptor('can_iface_name', self._iface_name,
                                      'Name of the CAN bus interface'),
             InternalObjectDescriptor('node', self._node,
-                                     'UAVCAN node instance'),
+                                     'DroneCAN node instance'),
             InternalObjectDescriptor('node_monitor', self._node_monitor_widget.monitor,
                                      'Object that stores information about nodes currently available on the bus'),
             InternalObjectDescriptor('request', request,
-                                     'Sends UAVCAN request transfers to other nodes'),
+                                     'Sends DroneCAN request transfers to other nodes'),
             InternalObjectDescriptor('serve', serve,
-                                     'Serves UAVCAN service requests'),
+                                     'Serves DroneCAN service requests'),
             InternalObjectDescriptor('broadcast', broadcast,
-                                     'Broadcasts UAVCAN messages, once or periodically'),
+                                     'Broadcasts DroneCAN messages, once or periodically'),
             InternalObjectDescriptor('subscribe', subscribe,
-                                     'Receives UAVCAN messages'),
+                                     'Receives DroneCAN messages'),
             InternalObjectDescriptor('periodic', periodic,
                                      'Invokes a callback from the node thread with the specified time interval'),
             InternalObjectDescriptor('defer', defer,
@@ -501,9 +509,9 @@ class MainWindow(QMainWindow):
             InternalObjectDescriptor('stop', stop,
                                      'Stops all ongoing tasks of broadcast(), subscribe(), defer(), periodic()'),
             InternalObjectDescriptor('print_yaml', print_yaml,
-                                     'Prints UAVCAN entities in YAML format'),
-            InternalObjectDescriptor('uavcan', pyuavcan_v0,
-                                     'The main Pyuavcan module'),
+                                     'Prints DroneCAN entities in YAML format'),
+            InternalObjectDescriptor('dronecan', dronecan,
+                                     'The main Pydronecan module'),
             InternalObjectDescriptor('main_window', self,
                                      'Main window object, holds references to all business logic objects'),
             InternalObjectDescriptor('can_send', can_send,
@@ -547,7 +555,7 @@ class MainWindow(QMainWindow):
 
             if self._successive_node_errors >= self.MAX_SUCCESSIVE_NODE_ERRORS:
                 show_error('Node failure',
-                           'Local UAVCAN node has generated too many errors and will be terminated.\n'
+                           'Local DroneCAN node has generated too many errors and will be terminated.\n'
                            'Please restart the application.',
                            msg, self)
                 self._node_spin_timer.stop()
@@ -583,11 +591,11 @@ def main():
         try:
             if dsdl_directory:
                 logger.info('Loading custom DSDL from %r', dsdl_directory)
-                pyuavcan_v0.load_dsdl(dsdl_directory)
+                dronecan.load_dsdl(dsdl_directory)
                 logger.info('Custom DSDL loaded successfully')
 
                 # setup an environment variable for sub-processes to know where to load custom DSDL from
-                os.environ['UAVCAN_CUSTOM_DSDL_PATH'] = dsdl_directory
+                os.environ['DroneCAN_CUSTOM_DSDL_PATH'] = dsdl_directory
         except Exception as ex:
             logger.exception('No DSDL loaded from %r, only standard messages will be supported', dsdl_directory)
             show_error('DSDL not loaded',
@@ -597,25 +605,25 @@ def main():
 
         # Trying to start the node on the specified interface
         try:
-            node_info = pyuavcan_v0.protocol.GetNodeInfo.Response()
+            node_info = dronecan.protocol.GetNodeInfo.Response()
             node_info.name = NODE_NAME
             node_info.software_version.major = __version__[0]
             node_info.software_version.minor = __version__[1]
 
-            node = pyuavcan_v0.make_node(iface,
+            node = dronecan.make_node(iface,
                                     node_info=node_info,
-                                    mode=pyuavcan_v0.protocol.NodeStatus().MODE_OPERATIONAL,
+                                    mode=dronecan.protocol.NodeStatus().MODE_OPERATIONAL,
                                     **iface_kwargs)
 
             # Making sure the interface is alright
             node.spin(0.1)
-        except pyuavcan_v0.transport.TransferError:
+        except dronecan.transport.TransferError:
             # allow unrecognized messages on startup:
-            logger.warning('UAVCAN Transfer Error occurred on startup', exc_info=True)
+            logger.warning('DroneCAN Transfer Error occurred on startup', exc_info=True)
             break
         except Exception as ex:
-            logger.error('UAVCAN node init failed', exc_info=True)
-            show_error('Fatal error', 'Could not initialize UAVCAN node', ex, blocking=True)
+            logger.error('DroneCAN node init failed', exc_info=True)
+            show_error('Fatal error', 'Could not initialize DroneCAN node', ex, blocking=True)
         else:
             break
 

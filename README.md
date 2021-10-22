@@ -1,17 +1,13 @@
-UAVCAN GUI Tool (legacy)
-========================
+DroneCAN GUI Tool 
+=======================
 
-UAVCAN GUI Tool is a cross-platform (Windows/Linux/OSX) application for UAVCAN/CAN v0 management and diagnostics.
+DroneCAN GUI Tool is a cross-platform (Windows/Linux/OSX) application for UAVCAN v0.9 and/or DroneCAN V1 management and diagnostics.
 
-**This is a legacy application; it is not compatible with the stable UAVCAN v1.
-There is [work underway on the new GUI solution called Yukon](https://forum.uavcan.org/c/app/yukon/14)
-that will support UAVCAN v1.
-While Yukon is unavailable, users of UAVCAN v1 are recommended to use the
-[Yakut command line tool](https://github.com/UAVCAN/yakut).**
+**This application is not compatible with UAVCAN v1, it is designed for DroneCAN V1 [formerly known as UAVCAN v 0.9]
 
-[Read the docs at **legacy.uavcan.org/GUI_Tool**](http://legacy.uavcan.org/GUI_Tool).
+[Read the docs at **http://dronecan.org/GUI_Tool**](http://dronecan.org/GUI_Tool).
 
-[Ask questions at **forum.uavcan.org**](https://forum.uavcan.org).
+[Ask questions at **https://ardupilot.org/copter/docs/common-contact-us.html**](https://ardupilot.org/copter/docs/common-contact-us.html).
 
 Read installation instructions:
 
@@ -19,7 +15,7 @@ Read installation instructions:
 - [**WINDOWS**](#installing-on-windows)
 - [**MACOS**](#installing-on-macos)
 
-![UAVCAN GUI Tool screenshot](screenshot.png "UAVCAN GUI Tool screenshot")
+![DroneCAN GUI Tool screenshot](screenshot.png "DroneCAN GUI Tool screenshot")
 
 ## Installing on GNU/Linux
 
@@ -27,14 +23,14 @@ The general approach is simple:
 
 1. Install PyQt5 for Python 3 using your OS' package manager (e.g. APT).
 2. Install the application itself from Git via PIP:
-`pip3 install git+https://github.com/UAVCAN/gui_tool@master`
+`pip3 install git+https://github.com/DroneCAN/gui_tool@master`
 (it is not necessary to clone this repository manually).
 Alternatively, if you're a developer and you want to install your local copy, use `pip3 install .`.
 
 It also may be necessary to install additional dependencies, depending on your distribution (see details below).
 
 Once the application is installed, you should see new desktop entries available in your desktop menu;
-also a new executable `uavcan_gui_tool` will be available in your `PATH`.
+also a new executable `dronecan_gui_tool` will be available in your `PATH`.
 If your desktop environment doesn't update the menu automatically, you may want to do it manually, e.g.
 by invoking `sudo update-desktop-database` (command depends on the distribution).
 
@@ -46,7 +42,7 @@ but it may come in handy when using the embedded IPython console.
 ```bash
 sudo apt-get install -y python3-pip python3-setuptools python3-wheel
 sudo apt-get install -y python3-numpy python3-pyqt5 python3-pyqt5.qtsvg git-core
-sudo pip3 install git+https://github.com/UAVCAN/gui_tool@master
+sudo pip3 install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
 #### Troubleshooting
@@ -65,13 +61,13 @@ If you're still unable to install the package, please open a ticket.
 #### Fedora 29+
 ```bash
 sudo dnf install python3-PyQt5
-sudo pip3 install git+https://github.com/UAVCAN/gui_tool@master
+sudo pip3 install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
 ## Installing on Windows
 
 In order to install this application,
-**download and install the latest `.msi` package from here: <https://files.zubax.com/products/org.uavcan.gui_tool/>**.
+**download and install the latest `.msi` package from here: <https://dronecan.github.io/gui_tool/>**.
 
 ### Building the MSI package
 
@@ -87,8 +83,8 @@ Make sure that `python` can be invoked from the terminal; if it can't, check you
 Having done that, execute the following (the script will prompt you for password to read the certificate file):
 
 ```dos
-python -m pip uninstall -y uavcan
-python -m pip uninstall -y uavcan_gui_tool
+python -m pip uninstall -y dronecan
+python -m pip uninstall -y dronecan_gui_tool
 python setup.py install
 python setup.py bdist_msi
 ```
@@ -112,8 +108,8 @@ as these ports are supported much better at the moment.
 brew install python3
 brew postinstall python3
 pip3 install PyQt5
-pip3 install git+https://github.com/UAVCAN/gui_tool@master
-uavcan_gui_tool
+pip3 install git+https://github.com/DroneCAN/gui_tool@master
+dronecan_gui_tool
 ```
 
 ### MacPorts option
@@ -125,7 +121,7 @@ If you're prompted to install Command Line Developer Tools, agree.
 ```bash
 sudo port selfupdate
 sudo port install curl-ca-bundle py35-pip py35-pyqt5 py35-numpy
-sudo python3.5 -m pip install git+https://github.com/UAVCAN/gui_tool@master
+sudo python3.5 -m pip install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
 We would like to provide prebuilt application packages instead of the mess above.
@@ -146,4 +142,4 @@ the distribution server.
 
 ### Code style
 
-Please follow the [Zubax Python Coding Conventions](https://kb.zubax.com/x/_oAh).
+Please follow the existing code styles .

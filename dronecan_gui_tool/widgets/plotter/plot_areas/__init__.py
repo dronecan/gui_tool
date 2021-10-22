@@ -9,7 +9,7 @@
 from collections import OrderedDict
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
-from ....thirdparty.pyqtgraph import mkPen, InfiniteLine
+from pyqtgraph import mkPen, InfiniteLine
 
 
 class AbstractPlotArea:
