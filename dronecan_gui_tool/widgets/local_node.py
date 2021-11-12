@@ -26,7 +26,7 @@ class LocalNodeWidget(QGroupBox):
 
         self._node = node
         self._node_id_collector = dronecan.app.message_collector.MessageCollector(
-            self._node, dronecan.protocol.NodeStatus, timeout=dronecan.protocol.NodeStatus().OFFLINE_TIMEOUT_MS * 1e-3)
+            self._node, dronecan.uavcan.protocol.NodeStatus, timeout=dronecan.uavcan.protocol.NodeStatus().OFFLINE_TIMEOUT_MS * 1e-3)
 
         self._node_id_label = QLabel('Set local node ID:', self)
 

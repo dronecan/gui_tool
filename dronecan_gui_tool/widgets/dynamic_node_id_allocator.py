@@ -34,7 +34,7 @@ class DynamicNodeIDAllocatorWidget(QGroupBox):
 
     def __init__(self, parent, node, node_monitor):
         super(DynamicNodeIDAllocatorWidget, self).__init__(parent)
-        self.setTitle('Dynamic node ID allocation server (dronecan.protocol.dynamic_node_id.*)')
+        self.setTitle('Dynamic node ID allocation server (dronecan.uavcan.protocol.dynamic_node_id.*)')
 
         self._node = node
         self._node_monitor = node_monitor

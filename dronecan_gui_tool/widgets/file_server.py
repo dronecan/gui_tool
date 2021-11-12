@@ -85,7 +85,7 @@ class PathItem(QWidget):
 class FileServerWidget(QGroupBox):
     def __init__(self, parent, node):
         super(FileServerWidget, self).__init__(parent)
-        self.setTitle('File server (dronecan.protocol.file.*)')
+        self.setTitle('File server (dronecan.uavcan.protocol.file.*)')
 
         self._node = node
         self._file_server = None

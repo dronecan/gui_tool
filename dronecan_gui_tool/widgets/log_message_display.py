@@ -46,13 +46,13 @@ class LogMessageDisplayWidget(QGroupBox):
 
     def __init__(self, parent, node):
         super(LogMessageDisplayWidget, self).__init__(parent)
-        self.setTitle('Log messages (dronecan.protocol.debug.LogMessage)')
+        self.setTitle('Log messages (dronecan.uavcan.protocol.debug.LogMessage)')
 
         self._log_widget = RealtimeLogWidget(self, columns=self.COLUMNS, multi_line_rows=True, started_by_default=True)
         self._log_widget.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self._log_widget.table.setWordWrap(True)
 
-        self._subscriber = node.add_handler(dronecan.protocol.debug.LogMessage, self._log_widget.add_item_async)
+        self._subscriber = node.add_handler(dronecan.uavcan.protocol.debug.LogMessage, self._log_widget.add_item_async)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self._log_widget, 1)

@@ -18,7 +18,7 @@ logger = getLogger(__name__)
 
 
 def node_mode_to_color(mode):
-    s = dronecan.protocol.NodeStatus()
+    s = dronecan.uavcan.protocol.NodeStatus()
     return {
         s.MODE_INITIALIZATION: Qt.cyan,
         s.MODE_MAINTENANCE: Qt.magenta,
@@ -28,7 +28,7 @@ def node_mode_to_color(mode):
 
 
 def node_health_to_color(health):
-    s = dronecan.protocol.NodeStatus()
+    s = dronecan.uavcan.protocol.NodeStatus()
     return {
         s.HEALTH_WARNING: Qt.yellow,
         s.HEALTH_ERROR: Qt.magenta,

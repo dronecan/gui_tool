@@ -66,7 +66,7 @@ class PercentSlider(QWidget):
 class ESCPanel(QDialog):
     DEFAULT_INTERVAL = 0.1
 
-    CMD_BIT_LENGTH = dronecan.get_dronecan_data_type(dronecan.equipment.esc.RawCommand().cmd).value_type.bitlen
+    CMD_BIT_LENGTH = dronecan.get_dronecan_data_type(dronecan.uavcan.equipment.esc.RawCommand().cmd).value_type.bitlen
     CMD_MAX = 2 ** (CMD_BIT_LENGTH - 1) - 1
     CMD_MIN = -(2 ** (CMD_BIT_LENGTH - 1))
 
@@ -137,7 +137,7 @@ class ESCPanel(QDialog):
     def _do_broadcast(self):
         try:
             if not self._pause.isChecked():
-                msg = dronecan.equipment.esc.RawCommand()
+                msg = dronecan.uavcan.equipment.esc.RawCommand()
                 for sl in self._sliders:
                     raw_value = sl.get_value() / 100
                     value = (-self.CMD_MIN if raw_value < 0 else self.CMD_MAX) * raw_value

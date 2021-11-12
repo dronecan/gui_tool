@@ -274,7 +274,7 @@ class MainWindow(QMainWindow):
             """
             Sends a service request to the specified node. This is a convenient wrapper over node.request().
             Args:
-                payload:        Request payload of type CompoundValue, e.g. dronecan.protocol.GetNodeInfo.Request()
+                payload:        Request payload of type CompoundValue, e.g. dronecan.uavcan.protocol.GetNodeInfo.Request()
                 server_node_id: Node ID of the node that will receive the request.
                 callback:       Response callback. Default handler will print the response to stdout in YAML format.
                 priority:       Transfer priority; defaults to a very low priority.
@@ -296,8 +296,8 @@ class MainWindow(QMainWindow):
             Example:
                 >>> def serve_acs(e):
                 >>>     print_yaml(e.request)
-                >>>     return dronecan.protocol.AccessCommandShell.Response()
-                >>> serve(dronecan.protocol.AccessCommandShell, serve_acs)
+                >>>     return dronecan.uavcan.protocol.AccessCommandShell.Response()
+                >>> serve(dronecan.uavcan.protocol.AccessCommandShell, serve_acs)
             Args:
                 dronecan_type:    DroneCAN service type to serve requests of.
                 callback:       Service callback with the business logic, see above.
@@ -324,13 +324,13 @@ class MainWindow(QMainWindow):
             more info. Multiple termination conditions will be joined with logical OR operation.
             Example:
                 # Send one message:
-                >>> broadcast(dronecan.protocol.debug.KeyValue(key='key', value=123))
+                >>> broadcast(dronecan.uavcan.protocol.debug.KeyValue(key='key', value=123))
                 # Repeat message every 100 milliseconds for 10 seconds:
-                >>> broadcast(dronecan.protocol.NodeStatus(), interval=0.1, duration=10)
+                >>> broadcast(dronecan.uavcan.protocol.NodeStatus(), interval=0.1, duration=10)
                 # Send 100 messages with 10 millisecond interval:
-                >>> broadcast(dronecan.protocol.Panic(reason_text='42!'), interval=0.01, count=100)
+                >>> broadcast(dronecan.uavcan.protocol.Panic(reason_text='42!'), interval=0.01, count=100)
             Args:
-                payload:    DroneCAN message structure, e.g. dronecan.protocol.debug.KeyValue(key='key', value=123)
+                payload:    DroneCAN message structure, e.g. dronecan.uavcan.protocol.debug.KeyValue(key='key', value=123)
                 priority:   Transfer priority; defaults to a very low priority.
                 interval:   Broadcasting interval in seconds.
                             If specified, the message will be re-published in the background with this interval.
@@ -605,14 +605,14 @@ def main():
 
         # Trying to start the node on the specified interface
         try:
-            node_info = dronecan.protocol.GetNodeInfo.Response()
+            node_info = dronecan.uavcan.protocol.GetNodeInfo.Response()
             node_info.name = NODE_NAME
             node_info.software_version.major = __version__[0]
             node_info.software_version.minor = __version__[1]
 
             node = dronecan.make_node(iface,
                                     node_info=node_info,
-                                    mode=dronecan.protocol.NodeStatus().MODE_OPERATIONAL,
+                                    mode=dronecan.uavcan.protocol.NodeStatus().MODE_OPERATIONAL,
                                     **iface_kwargs)
 
             # Making sure the interface is alright

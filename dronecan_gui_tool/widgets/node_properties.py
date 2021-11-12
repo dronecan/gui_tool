@@ -173,16 +173,16 @@ class Controls(QGroupBox):
         self._file_server_widget = file_server_widget
         self._dynamic_node_id_allocator_widget = dynamic_node_id_allocator_widget
 
-        self._restart_button = make_icon_button('power-off', 'Restart the node [dronecan.protocol.RestartNode]', self,
+        self._restart_button = make_icon_button('power-off', 'Restart the node [dronecan.uavcan.protocol.RestartNode]', self,
                                                 text='Restart', on_clicked=self._do_restart)
 
         self._transport_stats_button = make_icon_button('truck',
-                                                        'Request transport stats [dronecan.protocol.GetTransportStats]',
+                                                        'Request transport stats [dronecan.uavcan.protocol.GetTransportStats]',
                                                         self, text='Get Transport Stats',
                                                         on_clicked=self._do_get_transport_stats)
 
         self._update_button = make_icon_button('bug',
-                                               'Request firmware update [dronecan.protocol.file.BeginFirmwareUpdate]',
+                                               'Request firmware update [dronecan.uavcan.protocol.file.BeginFirmwareUpdate]',
                                                self, text='Update Firmware', on_clicked=self._do_firmware_update)
 
         layout = QHBoxLayout(self)
@@ -192,9 +192,9 @@ class Controls(QGroupBox):
         self.setLayout(layout)
 
     def _do_restart(self):
-        request = dronecan.protocol.RestartNode.Request(magic_number=dronecan.protocol.RestartNode.Request().MAGIC_NUMBER)
+        request = dronecan.uavcan.protocol.RestartNode.Request(magic_number=dronecan.uavcan.protocol.RestartNode.Request().MAGIC_NUMBER)
         if not request_confirmation('Confirm node restart',
-                                    'Do you really want to send request dronecan.protocol.RestartNode?', self):
+                                    'Do you really want to send request dronecan.uavcan.protocol.RestartNode?', self):
             return
 
         def callback(e):
@@ -228,7 +228,7 @@ class Controls(QGroupBox):
                 win.setLayout(layout)
                 win.show()
         try:
-            self._node.request(dronecan.protocol.GetTransportStats.Request(),
+            self._node.request(dronecan.uavcan.protocol.GetTransportStats.Request(),
                                self._target_node_id, callback, priority=REQUEST_PRIORITY)
             self.window().show_message('Transport stats requested')
         except Exception as ex:
@@ -325,9 +325,9 @@ class Controls(QGroupBox):
 
             if num_remaining_requests > 0:
                 num_remaining_requests -= 1
-                request = dronecan.protocol.file.BeginFirmwareUpdate.Request(
+                request = dronecan.uavcan.protocol.file.BeginFirmwareUpdate.Request(
                     source_node_id=self._node.node_id,
-                    image_file_remote_path=dronecan.protocol.file.Path(path=remote_fw_file))
+                    image_file_remote_path=dronecan.uavcan.protocol.file.Path(path=remote_fw_file))
                 self.window().show_message('Sending request (%d to go) %s', num_remaining_requests, request)
                 try:
                     self._node.request(request, self._target_node_id, on_response, priority=REQUEST_PRIORITY)
@@ -336,7 +336,7 @@ class Controls(QGroupBox):
             else:
                 on_success_or_timeout()
 
-        node_status_handle = self._node.add_handler(dronecan.protocol.NodeStatus, on_node_status)
+        node_status_handle = self._node.add_handler(dronecan.uavcan.protocol.NodeStatus, on_node_status)
         send_request()  # Kickstarting the process, it will continue in the background
 
 
@@ -356,7 +356,7 @@ def render_union(u):
         return value
     if isinstance(value, float):
         return round_float(value)
-    if 'dronecan.protocol.param.Empty' in str(value):
+    if 'dronecan.uavcan.protocol.param.Empty' in str(value):
         return ''
     return value
 
@@ -373,11 +373,11 @@ class ConfigParamEditWindow(QDialog):
         self._update_callback = update_callback
 
         min_val = get_union_value(param_struct.min_value)
-        if 'dronecan.protocol.param.Empty' in str(min_val):
+        if 'dronecan.uavcan.protocol.param.Empty' in str(min_val):
             min_val = None
 
         max_val = get_union_value(param_struct.max_value)
-        if 'dronecan.protocol.param.Empty' in str(max_val):
+        if 'dronecan.uavcan.protocol.param.Empty' in str(max_val):
             max_val = None
 
         value = get_union_value(param_struct.value)
@@ -485,7 +485,7 @@ class ConfigParamEditWindow(QDialog):
 
     def _do_fetch(self):
         try:
-            request = dronecan.protocol.param.GetSet.Request(name=self._param_struct.name)
+            request = dronecan.uavcan.protocol.param.GetSet.Request(name=self._param_struct.name)
             self._node.request(request, self._target_node_id, self._on_response, priority=REQUEST_PRIORITY)
         except Exception as ex:
             show_error('Node error', 'Could not send param get request', ex, self)
@@ -518,7 +518,7 @@ class ConfigParamEditWindow(QDialog):
             return
 
         try:
-            request = dronecan.protocol.param.GetSet.Request(name=self._param_struct.name,
+            request = dronecan.uavcan.protocol.param.GetSet.Request(name=self._param_struct.name,
                                                            value=self._param_struct.value)
             logger.info('Sending param set request: %s', request)
             self._node.request(request, self._target_node_id, self._on_response, priority=REQUEST_PRIORITY)
@@ -541,7 +541,7 @@ class ConfigParams(QGroupBox):
         self._read_all_button = make_icon_button('refresh', 'Fetch all config parameters from the node', self,
                                                  text='Fetch All', on_clicked=self._do_reload)
 
-        opcodes = dronecan.protocol.param.ExecuteOpcode.Request()
+        opcodes = dronecan.uavcan.protocol.param.ExecuteOpcode.Request()
 
         self._save_button = \
             make_icon_button('database', 'Commit configuration to the non-volatile storage [OPCODE_SAVE]', self,
@@ -613,7 +613,7 @@ class ConfigParams(QGroupBox):
         try:
             index += 1
             self.window().show_message('Requesting index %d', index)
-            self._node.defer(0.1, lambda: self._node.request(dronecan.protocol.param.GetSet.Request(index=index),
+            self._node.defer(0.1, lambda: self._node.request(dronecan.uavcan.protocol.param.GetSet.Request(index=index),
                                                              self._target_node_id,
                                                              partial(self._on_fetch_response, index),
                                                              priority=REQUEST_PRIORITY))
@@ -624,7 +624,7 @@ class ConfigParams(QGroupBox):
     def _do_reload(self):
         try:
             index = 0
-            self._node.request(dronecan.protocol.param.GetSet.Request(index=index),
+            self._node.request(dronecan.uavcan.protocol.param.GetSet.Request(index=index),
                                self._target_node_id,
                                partial(self._on_fetch_response, index),
                                priority=REQUEST_PRIORITY)
@@ -636,7 +636,7 @@ class ConfigParams(QGroupBox):
             self._params = []
 
     def _do_execute_opcode(self, opcode):
-        request = dronecan.protocol.param.ExecuteOpcode.Request(opcode=opcode)
+        request = dronecan.uavcan.protocol.param.ExecuteOpcode.Request(opcode=opcode)
         opcode_str = dronecan.value_to_constant_name(request, 'opcode', keep_literal=True)
 
         if not request_confirmation('Confirm opcode execution',

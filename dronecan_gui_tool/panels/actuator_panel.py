@@ -153,12 +153,12 @@ class ActuatorPanel(QDialog):
     def _do_broadcast(self):
         try:
             if not self._pause.isChecked():
-#                msg = dronecan.equipment.esc.RawCommand()
-                msg = dronecan.equipment.actuator.ArrayCommand()
+#                msg = dronecan.uavcan.equipment.esc.RawCommand()
+                msg = dronecan.uavcan.equipment.actuator.ArrayCommand()
                 for sl in self._sliders:
                     if sl.is_enabled() == False:
                         continue
-                    msg_cmd = dronecan.equipment.actuator.Command()
+                    msg_cmd = dronecan.uavcan.equipment.actuator.Command()
                     msg_cmd.actuator_id = sl.get_actuator_id()
                     msg_cmd.command_value = sl.get_value()
                     msg_cmd.command_type = 0
