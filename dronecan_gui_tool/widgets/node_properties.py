@@ -356,7 +356,7 @@ def render_union(u):
         return value
     if isinstance(value, float):
         return round_float(value)
-    if 'dronecan.uavcan.protocol.param.Empty' in str(value):
+    if 'uavcan.protocol.param.Empty' in str(value):
         return ''
     return value
 
@@ -373,11 +373,11 @@ class ConfigParamEditWindow(QDialog):
         self._update_callback = update_callback
 
         min_val = get_union_value(param_struct.min_value)
-        if 'dronecan.uavcan.protocol.param.Empty' in str(min_val):
+        if 'uavcan.protocol.param.Empty' in str(min_val):
             min_val = None
 
         max_val = get_union_value(param_struct.max_value)
-        if 'dronecan.uavcan.protocol.param.Empty' in str(max_val):
+        if 'uavcan.protocol.param.Empty' in str(max_val):
             max_val = None
 
         value = get_union_value(param_struct.value)
