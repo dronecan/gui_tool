@@ -537,6 +537,7 @@ class ConfigParams(QGroupBox):
 
         self._node = node
         self._target_node_id = target_node_id
+        self._retries = 0
 
         self._read_all_button = make_icon_button('refresh', 'Fetch all config parameters from the node', self,
                                                  text='Fetch All', on_clicked=self._do_reload)
@@ -599,8 +600,19 @@ class ConfigParams(QGroupBox):
 
     def _on_fetch_response(self, index, e):
         if e is None:
-            self.window().show_message('Param fetch failed: request timed out')
+            if self._retries < 5:
+                self._retries += 1
+                self.window().show_message('Re-requesting index %d', index)
+                self._node.defer(0.1, lambda: self._node.request(dronecan.uavcan.protocol.param.GetSet.Request(index=index),
+                                                                self._target_node_id,
+                                                                partial(self._on_fetch_response, index),
+                                                                priority=REQUEST_PRIORITY))
+            else:
+                self.window().show_message('Param fetch failed: request timed out')
             return
+
+        # reset retries when we get a response
+        self._retries = 0
 
         if len(e.response.name) == 0:
             self.window().show_message('%d params fetched successfully', index)
