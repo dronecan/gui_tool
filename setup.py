@@ -25,9 +25,6 @@ from version import __version__
 
 assert sys.version_info[0] == 3, 'Python 3 is required'
 
-ICON_HIRES = os.path.join(PACKAGE_NAME, 'icons', 'logo_256x256.png')
-ICON_ICO = os.path.join(PACKAGE_NAME, 'icons', 'logo.ico')
-
 #
 # Checking if git submodules are initialized
 #
@@ -90,14 +87,13 @@ args = dict(
         'Environment :: X11 Applications',
         'Environment :: Win32 (MS Windows)',
         'Environment :: MacOS X',
-    ]
+    ],
+    package_data={'DroneCAN_GUI_Tool': [ 'icons/*.png', 'icons/*.ico']}
 )
 
 if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
     # Delegating the desktop integration work to 'install_freedesktop'
     args.setdefault('setup_requires', []).append('install_freedesktop')
-
-    icon_path = os.path.join(sys.prefix, 'share/icons/hicolor/256x256/apps', PACKAGE_NAME + '.png')
 
     args['desktop_entries'] = {
         PACKAGE_NAME: {
@@ -105,22 +101,8 @@ if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
             'GenericName': args['description'],
             'Comment': args['description'],
             'Categories': 'Development;Utility;',
-            'Icon': icon_path,
         }
     }
-
-    # Manually installing the icon (we can't use data_files because... oh, it just doesn't work here)
-    icon_installation_path = args['desktop_entries'][PACKAGE_NAME]['Icon']
-    print('Permanently installing icon to:', icon_installation_path)
-    try:
-        shutil.rmtree(icon_installation_path)
-    except Exception:
-        pass
-    try:
-        os.makedirs(os.path.dirname(icon_installation_path))
-    except Exception:
-        pass
-    shutil.copy(ICON_HIRES, icon_installation_path)
 
     # Manually invoking the freedesktop extension - this should work even if we're getting installed via PIP
     sys.argv.append('install_desktop')
@@ -199,7 +181,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     args['executables'] = [
         cx_Freeze.Executable(os.path.join('bin', PACKAGE_NAME),
                              base='Win32GUI',
-                             icon=ICON_ICO,
+                             icon='icons/logo.ico',
                              shortcutName=HUMAN_FRIENDLY_NAME,
                              shortcutDir='ProgramMenuFolder'),
     ]
