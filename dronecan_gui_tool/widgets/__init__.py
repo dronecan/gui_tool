@@ -640,7 +640,7 @@ def get_app_icon():
         pass
     # noinspection PyBroadException
     try:
-        fn = pkg_resources.resource_filename('dronecan_gui_tool', os.path.join('icons', 'logo_256x256.png'))
+        fn = pkg_resources.resource_filename('dronecan_gui_tool', os.path.join('icons', 'dronecan_gui_tool.png'))
         _APP_ICON_OBJECT = QIcon(fn)
     except Exception:
         logger.error('Could not load icon', exc_info=True)
