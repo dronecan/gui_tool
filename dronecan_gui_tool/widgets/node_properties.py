@@ -552,6 +552,14 @@ class ConfigParams(QGroupBox):
             make_icon_button('eraser', 'Clear the non-volatile configuration storage [OPCODE_ERASE]', self,
                              text='Erase All', on_clicked=partial(self._do_execute_opcode, opcodes.OPCODE_ERASE))
 
+        self._save_to_file = make_icon_button('',
+                                              'Save Parameters to File',
+                                                self, text='Save To File', on_clicked=self._do_save_to_file)
+
+        self._load_from_file = make_icon_button('',
+                                                'Load Parameters From File',
+                                                self, text='Load From File', on_clicked=self._do_load_from_file)
+        
         columns = [
             BasicTable.Column('Idx',
                               lambda m: m[0]),
@@ -582,6 +590,10 @@ class ConfigParams(QGroupBox):
         controls_layout.addWidget(self._read_all_button, 1)
         controls_layout.addWidget(self._save_button, 1)
         controls_layout.addWidget(self._erase_button, 1)
+        layout.addLayout(controls_layout)
+        controls_layout = QHBoxLayout(self)
+        controls_layout.addWidget(self._save_to_file, 1)
+        controls_layout.addWidget(self._load_from_file, 1)
         layout.addLayout(controls_layout)
         layout.addWidget(self._table)
         self.setLayout(layout)
@@ -646,6 +658,90 @@ class ConfigParams(QGroupBox):
             self.window().show_message('Param fetch request sent')
             self._table.setRowCount(0)
             self._params = []
+
+    def param_as_string(self, value):
+        value_type = dronecan.get_active_union_field(value)
+
+        if value_type == 'integer_value':
+            return str(value.integer_value)
+        elif value_type == 'real_value':
+            return str(value.real_value)
+        elif value_type == 'boolean_value':
+            return str(value.boolean_value)
+        elif value_type == 'string_value':
+            return value.string_value
+        else:
+            raise RuntimeError('invalid param value type')
+            
+    def _do_save_to_file(self):
+        '''save parameters to a file'''
+        param_file = QFileDialog().getSaveFileName(self, 'Select param file', '',
+                                                   'Parameter files (*.parm);;All files (*.*)')
+        if not param_file[0]:
+            return
+        param_file = os.path.normcase(os.path.abspath(param_file[0]))
+        print("save to file", param_file)
+        f = open(param_file, "w")
+        for p in self._params:
+            value = p.value
+            name = p.name
+            f.write("%s %s\n" % (name, self.param_as_string(value)))
+        f.close()
+
+    def _on_send_response(self, e):
+        if e is None:
+            self.show_message('Request timed out')
+        else:
+            for i in range(len(self._params)):
+                p = self._params[i]
+                name = str(p.name)
+                if name == str(e.response.name):
+                    logger.info('set %s to %s' % (name, self.param_as_string(e.response.value)))
+                    self._table.item(i, self.VALUE_COLUMN).setText(self.param_as_string(e.response.value))
+
+    def save_param(self, name, old_value, str_value):
+        value_type = dronecan.get_active_union_field(old_value)
+        v = old_value
+
+        if value_type == 'integer_value':
+            v.integer_value = int(str_value)
+        elif value_type == 'real_value':
+            v.real_value = float(str_value)
+        elif value_type == 'boolean_value':
+            v.boolean_value = bool(str_value)
+        elif value_type == 'string_value':
+            v.string_value = str_value
+        else:
+            raise RuntimeError('bad parameter type on save')
+
+        try:
+            request = dronecan.uavcan.protocol.param.GetSet.Request(name=name, value=v)
+            self._node.request(request, self._target_node_id, self._on_send_response, priority=REQUEST_PRIORITY)
+        except Exception as ex:
+            show_error('Node error', 'Could not send param set request', ex, self)
+
+    def _do_load_from_file(self):
+        '''load parameters from a file'''
+        param_file = QFileDialog().getOpenFileName(self, 'Select param file', '',
+                                                   'Parameter files (*.parm);;All files (*.*)')
+        if not param_file[0]:
+            return
+        pdict = {}
+        for p in self._params:
+            pdict[str(p.name)] = p.value
+
+        param_file = os.path.normcase(os.path.abspath(param_file[0]))
+        print("load from file", param_file)
+        f = open(param_file, "r")
+        for line in f.readlines():
+            a = line.split()
+            name = a[0]
+            value = a[1]
+            if name in pdict:
+                s = self.param_as_string(pdict[name])
+                if s != value:
+                    self.save_param(name, pdict[name], value)
+        f.close()
 
     def _do_execute_opcode(self, opcode):
         request = dronecan.uavcan.protocol.param.ExecuteOpcode.Request(opcode=opcode)
