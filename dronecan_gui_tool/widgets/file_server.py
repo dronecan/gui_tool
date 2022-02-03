@@ -7,7 +7,11 @@
 #
 
 import dronecan
+from dronecan import uavcan
 import os
+import json
+import zlib
+import base64
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QWidget, QDirModel, QCompleter, QFileDialog, QLabel
 from PyQt5.QtCore import QTimer
 from logging import getLogger
@@ -81,6 +85,45 @@ class PathItem(QWidget):
     def reset_hit_counts(self):
         self._hit_count_label.setText('0')
 
+class FileServerJson(dronecan.app.file_server.FileServer):
+    def __init__(self, node):
+        super(FileServerJson, self).__init__(node)
+        self._images = {}
+        self._image_timestamps = {}
+
+    def _load_image(self, path):
+        if path.lower().endswith('.apj') or path.lower().endswith('.px4'):
+            # load JSON image
+            j = json.load(open(path,'r'))
+            if not 'image' in j:
+                print("Missing image in %s" % path)
+                return None
+            return bytearray(zlib.decompress(base64.b64decode(j['image'])))
+        return open(path,'rb').read()
+
+    def _check_path_change(self, path):
+        mtime = os.path.getmtime(path)
+        if path not in self._images or mtime != self._image_timestamps[path]:
+            self._image_timestamps[path] = mtime
+            self._images[path] = self._load_image(path)
+
+    def _read(self, e):
+        logger.debug("[#{0:03d}:uavcan.protocol.file.Read] {1!r} @ offset {2:d}"
+                     .format(e.transfer.source_node_id, e.request.path.path.decode(), e.request.offset))
+        try:
+            path = self._resolve_path(e.request.path)
+            self._check_path_change(path)
+            resp = uavcan.protocol.file.Read.Response()
+            read_size = dronecan.get_dronecan_data_type(dronecan.get_fields(resp)['data']).max_size
+            resp.data = self._images[path][e.request.offset:e.request.offset+read_size]
+            resp.error.value = resp.error.OK
+        except Exception:
+            logger.exception("[#{0:03d}:uavcan.protocol.file.Read] error")
+            resp = uavcan.protocol.file.Read.Response()
+            resp.error.value = resp.error.UNKNOWN_ERROR
+
+        return resp
+
 
 class FileServerWidget(QGroupBox):
     def __init__(self, parent, node):
@@ -147,7 +190,7 @@ class FileServerWidget(QGroupBox):
             self._file_server = None
             logger.info('File server stopped')
         else:
-            self._file_server = dronecan.app.file_server.FileServer(self._node)
+            self._file_server = FileServerJson(self._node)
             self._sync_paths()
 
     def _on_remove_path(self, path):
@@ -183,3 +226,4 @@ class FileServerWidget(QGroupBox):
     def force_start(self):
         if not self._file_server:
             self._on_start_stop()
+
