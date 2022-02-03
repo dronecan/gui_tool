@@ -5,7 +5,7 @@ DroneCAN GUI Tool is a cross-platform (Windows/Linux/OSX) application for UAVCAN
 
 **This application is not compatible with UAVCAN v1, it is designed for DroneCAN V1 [formerly known as UAVCAN v 0.9]
 
-[Read the docs at **http://dronecan.org/GUI_Tool**](http://dronecan.org/GUI_Tool).
+[Read the docs at **https://dronecan.org**](http://dronecan.org/GUI_Tool).
 
 [Ask questions at **https://ardupilot.org/copter/docs/common-contact-us.html**](https://ardupilot.org/copter/docs/common-contact-us.html).
 
