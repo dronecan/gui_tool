@@ -9,7 +9,7 @@
 import dronecan
 from functools import partial
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, QSlider, QSpinBox, QDoubleSpinBox, \
-    QPlainTextEdit
+    QPlainTextEdit, QCheckBox
 from PyQt5.QtCore import QTimer, Qt
 from logging import getLogger
 from ..widgets import make_icon_button, get_icon, get_monospace_font
@@ -85,6 +85,8 @@ class ESCPanel(QDialog):
         self._num_sliders.setValue(len(self._sliders))
         self._num_sliders.valueChanged.connect(self._update_number_of_sliders)
 
+        self._safety_enable = QCheckBox(self)
+
         self._bcast_interval = QDoubleSpinBox(self)
         self._bcast_interval.setMinimum(0.01)
         self._bcast_interval.setMaximum(1.0)
@@ -121,6 +123,8 @@ class ESCPanel(QDialog):
         controls_layout = QHBoxLayout(self)
         controls_layout.addWidget(QLabel('Channels:', self))
         controls_layout.addWidget(self._num_sliders)
+        controls_layout.addWidget(QLabel('SendSafety:', self))
+        controls_layout.addWidget(self._safety_enable)
         controls_layout.addWidget(QLabel('Broadcast interval:', self))
         controls_layout.addWidget(self._bcast_interval)
         controls_layout.addWidget(QLabel('sec', self))
@@ -145,6 +149,11 @@ class ESCPanel(QDialog):
 
                 self._node.broadcast(msg)
                 self._msg_viewer.setPlainText(dronecan.to_yaml(msg))
+
+                if self._safety_enable.checkState():
+                    msg = dronecan.ardupilot.indication.SafetyState()
+                    msg.status = msg.STATUS_SAFETY_OFF
+                    self._node.broadcast(msg)
             else:
                 self._msg_viewer.setPlainText('Paused')
         except Exception as ex:
