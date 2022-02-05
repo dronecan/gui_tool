@@ -12,6 +12,7 @@ import os
 import json
 import zlib
 import base64
+import struct
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QWidget, QDirModel, QCompleter, QFileDialog, QLabel
 from PyQt5.QtCore import QTimer
 from logging import getLogger
@@ -20,6 +21,12 @@ from . import make_icon_button, CommitableComboBoxWithHistory, get_icon, flash, 
 
 logger = getLogger(__name__)
 
+def FileServer_PathKey(path):
+    '''
+    return key used in file read request for a path. This is kept to 7 bytes
+    to keep the read request in 2 frames
+    '''
+    return base64.b64encode(struct.pack("<I",zlib.crc32(bytearray(path,'utf-8'))))[:7].decode('utf-8')
 
 class PathItem(QWidget):
     def __init__(self, parent, default=None):
@@ -90,6 +97,13 @@ class FileServerJson(dronecan.app.file_server.FileServer):
         super(FileServerJson, self).__init__(node)
         self._images = {}
         self._image_timestamps = {}
+        self._key_to_path = {}
+
+    def _resolve_path(self, relative):
+        rel = relative.path.decode().replace(chr(relative.SEPARATOR), os.path.sep)
+        if rel in self._key_to_path:
+            return self._key_to_path[rel]
+        return super(FileServerJson, self)._resolve_path(relative)
 
     def _load_image(self, path):
         if path.lower().endswith('.apj') or path.lower().endswith('.px4'):
@@ -106,12 +120,17 @@ class FileServerJson(dronecan.app.file_server.FileServer):
         if path not in self._images or mtime != self._image_timestamps[path]:
             self._image_timestamps[path] = mtime
             self._images[path] = self._load_image(path)
+            self._key_to_path[FileServer_PathKey(path)] = path
 
     def _read(self, e):
         logger.debug("[#{0:03d}:uavcan.protocol.file.Read] {1!r} @ offset {2:d}"
                      .format(e.transfer.source_node_id, e.request.path.path.decode(), e.request.offset))
         try:
-            path = self._resolve_path(e.request.path)
+            key = e.request.path.path.decode()
+            if key in self._key_to_path:
+                path = self._key_to_path[key]
+            else:
+                path = self._resolve_path(e.request.path)
             self._check_path_change(path)
             resp = uavcan.protocol.file.Read.Response()
             read_size = dronecan.get_dronecan_data_type(dronecan.get_fields(resp)['data']).max_size
@@ -180,6 +199,8 @@ class FileServerWidget(QGroupBox):
             logger.info('Updating lookup paths: %r', paths)
             self._file_server.lookup_paths = paths
             flash(self, 'File server lookup paths: %r', paths, duration=3)
+            for p in paths:
+                self._file_server._check_path_change(p)
 
     def _on_start_stop(self):
         if self._file_server:

@@ -17,6 +17,7 @@ from PyQt5.QtGui import QPalette
 from logging import getLogger
 from . import get_monospace_font, make_icon_button, BasicTable, show_error, request_confirmation
 from .node_monitor import node_health_to_color, node_mode_to_color
+from .file_server import FileServer_PathKey
 
 
 logger = getLogger(__name__)
@@ -277,7 +278,7 @@ class Controls(QGroupBox):
             show_error('File server error', 'Could not configure the file server', ex, self)
             return
 
-        remote_fw_file = os.path.basename(fw_file)
+        remote_fw_file = FileServer_PathKey(fw_file)
         logger.info('Firmware file remote path: %r', remote_fw_file)
 
         deferred_request_handle = None
