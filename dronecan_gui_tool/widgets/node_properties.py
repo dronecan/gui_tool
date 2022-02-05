@@ -243,16 +243,6 @@ class Controls(QGroupBox):
                        'Assign a node ID to the local node in order to issue requests (see the main window)', self)
             return
 
-        # Checking if the dynamic node ID allocator is running; warning the user if it doesn't
-        if self._dynamic_node_id_allocator_widget.allocator is None:
-            if not request_confirmation('Suspicious configuration',
-                                        'The local dynamic node ID allocator is not running (see the main window).\n'
-                                        'Some nodes will not be able to perform firmware update unless a dynamic node '
-                                        'ID allocator is available on the bus.\n'
-                                        'Do you want to continue anyway?', self):
-                self.window().show_message('Cancelled')
-                return
-
         # Requesting the firmware path
         fw_file = QFileDialog().getOpenFileName(self, 'Select firmware file', '',
                                                 'Binary images (*.bin);;ArduPilot Firmware (*.apj);;PX4 Firmware (*.px4);;All files (*.*)')
