@@ -55,6 +55,13 @@ def _linux_parse_ip_link_show(out_ifaces):
 
     return re.findall(r'\d+?: ([a-z0-9]+?): <[^>]*UP[^>]*>.*\n *link/can', out) + out_ifaces
 
+def _mavcan_interfaces():
+    '''extra CAN over mavlink interfaces'''
+    try:
+        from pymavlink import mavutil
+    except ImportError:
+        return []
+    return ['mavcan::14550']
 
 def list_ifaces():
     """Returns dictionary, where key is description, value is the OS assigned name of the port"""
@@ -75,6 +82,8 @@ def list_ifaces():
             logger.warning('Could not parse "ip link show": %s', ex, exc_info=True)
             ifaces = _linux_parse_proc_net_dev(ifaces)       # Fallback
 
+        ifaces += _mavcan_interfaces()
+
         out = OrderedDict()
         for x in ifaces:
             out[x] = x
@@ -91,6 +100,8 @@ def list_ifaces():
                     out[port.systemLocation()] = port.systemLocation()
             else:
                 out[port.description()] = port.systemLocation()
+
+        ifaces += _mavcan_interfaces()
 
         return out
 
