@@ -1,12 +1,11 @@
 #
-# Copyright (C) 2016  UAVCAN Development Team  <uavcan.org>
+# Copyright (C) 2016  DroneCAN Development Team  <dronecan.org>
 #
 # This software is distributed under the terms of the MIT License.
 #
-# Author: Pavel Kirienko <pavel.kirienko@zubax.com>
+# Author: Pavel Kirienko
+#         David Buzz
+#         Andrew Tridgell
 #
-
 #
-# For the rationale refer to http://stackoverflow.com/questions/458550
-#
-__version__ = 1, 0, 0
+__version__ = 1, 1, 0
