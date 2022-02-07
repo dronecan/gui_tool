@@ -77,7 +77,7 @@ args = dict(
     url='http://dronecan.org',
     license='MIT',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
         'Topic :: Scientific/Engineering :: Human Machine Interfaces',
