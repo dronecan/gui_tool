@@ -195,6 +195,11 @@ def run_setup_window(icon, dsdl_path=None):
     bitrate.setMinimum(10000)
     bitrate.setValue(1000000)
 
+    bus_number = QSpinBox(win)
+    bus_number.setMaximum(4)
+    bus_number.setMinimum(1)
+    bus_number.setValue(1)
+    
     baudrate = QComboBox(win)
     baudrate.setEditable(True)
     baudrate.setInsertPolicy(QComboBox.NoInsert)
@@ -212,15 +217,6 @@ def run_setup_window(icon, dsdl_path=None):
     dir_selection = DirectorySelectionWidget(win, dsdl_path)
 
     ok = QPushButton('OK', win)
-
-    def update_slcan_options_visibility():
-        if RUNNING_ON_LINUX:
-            slcan_active = '/' in combo.currentText()
-        else:
-            slcan_active = True
-        slcan_group.setEnabled(slcan_active)
-
-    combo.currentTextChanged.connect(update_slcan_options_visibility)
 
     ifaces = None
 
@@ -270,6 +266,7 @@ def run_setup_window(icon, dsdl_path=None):
             return
         kwargs['baudrate'] = baud_rate_value
         kwargs['bitrate'] = int(bitrate.value())
+        kwargs['bus_number'] = int(bus_number.value())
         result_key = str(combo.currentText()).strip()
         if not result_key:
             show_error('Invalid parameters', 'Interface name cannot be empty', 'Please select a valid interface',
@@ -288,15 +285,17 @@ def run_setup_window(icon, dsdl_path=None):
     can_layout.addWidget(QLabel('Select CAN interface'))
     can_layout.addWidget(combo)
 
-    slcan_group = QGroupBox('SLCAN adapter settings', win)
-    slcan_layout = QGridLayout()
-    slcan_layout.addWidget(QLabel('CAN bus bit rate:'), 0, 0)
-    slcan_layout.addWidget(bitrate, 0, 1)
-    slcan_layout.addWidget(QLabel('Adapter baud rate (not applicable to USB-CAN adapters):'), 1, 0)
-    slcan_layout.addWidget(baudrate, 1, 1)
-    slcan_group.setLayout(slcan_layout)
+    adapter_group = QGroupBox('Adapter settings', win)
+    adapter_layout = QGridLayout()
+    adapter_layout.addWidget(QLabel('Bus Number:'), 0, 0)
+    adapter_layout.addWidget(bus_number, 0, 1)
+    adapter_layout.addWidget(QLabel('CAN bus bit rate:'), 1, 0)
+    adapter_layout.addWidget(bitrate, 1, 1)
+    adapter_layout.addWidget(QLabel('Adapter baud rate (not applicable to USB):'), 2, 0)
+    adapter_layout.addWidget(baudrate, 2, 1)
+    adapter_group.setLayout(adapter_layout)
 
-    can_layout.addWidget(slcan_group)
+    can_layout.addWidget(adapter_group)
     can_group.setLayout(can_layout)
 
     layout = QVBoxLayout()
@@ -307,7 +306,6 @@ def run_setup_window(icon, dsdl_path=None):
     win.setLayout(layout)
 
     with BackgroundIfaceListUpdater() as iface_lister:
-        update_slcan_options_visibility()
         update_iface_list()
         timer = QTimer(win)
         timer.setSingleShot(False)
