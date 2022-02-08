@@ -126,6 +126,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
         'dronecan',
         'qtpy',
         'qtconsole',
+        'easywebdav',
     ]
     unpacked_eggs_dir = os.path.join('build', 'hatched_eggs')
     sys.path.insert(0, unpacked_eggs_dir)
