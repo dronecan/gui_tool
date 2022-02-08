@@ -41,6 +41,10 @@ for i in sorted_dict2:
 
 #exit()
 print("\n--------size-sorted-package-info-----------------")
+total = 0
 for i in sorted_dict:
     print(i,sorted_dict[i])
+    total += i
+print("Total %.2f MByte" % (total * 1.0e-6))
+
 	
