@@ -20,6 +20,9 @@ HUMAN_FRIENDLY_NAME = 'DroneCAN GUI Tool'
 
 SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+# unique code so the package can be upgraded as an MSI
+upgrade_code = '{D5CD6E19-2545-32C7-A62A-4595B28BCDC3}'
+
 sys.path.append(os.path.join(SOURCE_DIR, PACKAGE_NAME))
 from version import __version__
 
@@ -176,6 +179,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
             ] + missing_dlls,
         },
         'bdist_msi': {
+            'upgrade_code' : upgrade_code,
             'initial_target_dir': '[ProgramFilesFolder]\\DroneCAN\\' + HUMAN_FRIENDLY_NAME,
         },
     }
