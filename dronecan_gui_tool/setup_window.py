@@ -101,7 +101,7 @@ def list_ifaces():
             else:
                 out[port.description()] = port.systemLocation()
 
-        ifaces += _mavcan_interfaces()
+        out += _mavcan_interfaces()
 
         return out
 
