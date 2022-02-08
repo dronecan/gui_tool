@@ -82,7 +82,9 @@ def list_ifaces():
             logger.warning('Could not parse "ip link show": %s', ex, exc_info=True)
             ifaces = _linux_parse_proc_net_dev(ifaces)       # Fallback
 
-        ifaces += _mavcan_interfaces()
+        mav_ifaces = _mavcan_interfaces()
+        for m in mav_ifaces:
+            out[m] = m
 
         out = OrderedDict()
         for x in ifaces:
