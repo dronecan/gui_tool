@@ -3,8 +3,6 @@ DroneCAN GUI Tool
 
 DroneCAN GUI Tool is a cross-platform (Windows/Linux/OSX) application for UAVCAN v0.9 and/or DroneCAN V1 management and diagnostics.
 
-**This application is not compatible with UAVCAN v1, it is designed for DroneCAN V1 [formerly known as UAVCAN v 0.9]
-
 [Read the docs at **https://dronecan.org**](https://dronecan.org).
 
 [Ask questions at **https://ardupilot.org/copter/docs/common-contact-us.html**](https://ardupilot.org/copter/docs/common-contact-us.html).
@@ -67,29 +65,11 @@ sudo pip3 install git+https://github.com/DroneCAN/gui_tool@master
 ## Installing on Windows
 
 In order to install this application,
-**download and install the latest `.msi` package from here: <https://dronecan.github.io/gui_tool/>**.
+**download and install the latest `.msi` package from here: <https://firmware.ardupilot.org/Tools/CAN_GUI/>**.
 
 ### Building the MSI package
 
-These instructions are for developers only. End users should use pre-built MSI packages (see the link above).
-
-First, install dependencies:
-
-* [WinPython 3.4 or newer, pre-packaged with PyQt5](http://winpython.github.io/).
-Make sure that `python` can be invoked from the terminal; if it can't, check your `PATH`.
-* Windows 10 SDK.
-[Free edition of Visual Studio is packaged with Windows SDK](https://www.visualstudio.com/).
-
-Having done that, execute the following (the script will prompt you for password to read the certificate file):
-
-```dos
-python -m pip uninstall -y dronecan
-python -m pip uninstall -y dronecan_gui_tool
-python setup.py install
-python setup.py bdist_msi
-```
-
-Collect the resulting signed MSI from `dist/`.
+Please see the file winbuild.bat in this directory, or use the MSI file build by github actions on any commit
 
 ## Installing on macOS
 
