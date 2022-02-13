@@ -25,7 +25,6 @@ tracker are located at <a href="https://github.com/DroneCAN/gui_tool">https://gi
 
 
 def _list_3rd_party():
-    #from ..thirdparty 
     import pyqtgraph
     import qtawesome
 
