@@ -1,3 +1,0 @@
-[submodule "dronecan_gui_tool/thirdparty/pyqtgraph"]
-	path = dronecan_gui_tool/thirdparty/pyqtgraph
-	url = https://github.com/pyqtgraph/pyqtgraph
