@@ -23,14 +23,6 @@ parser.add_argument("--dsdl", help="path to custom DSDL")
 
 args = parser.parse_args()
 
-
-if __name__ == '__main__' and not __package__:
-    print("blerggggggg")
-    import sys
-    sys.path.insert(0, 'dronecan_gui_tool/thirdparty/')
-    sys.path.insert(0, 'dronecan_gui_tool/')
-    __package__ = 'fff.obng'
-
 #
 # Configuring logging before other packages are imported
 #
