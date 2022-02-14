@@ -13,7 +13,7 @@ import threading
 import copy
 from .widgets import show_error, get_monospace_font
 from PyQt5.QtWidgets import QComboBox, QCompleter, QDialog, QDirModel, QFileDialog, QGroupBox, QHBoxLayout, QLabel, \
-    QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QGridLayout
+    QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QGridLayout, QCheckBox
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIntValidator
 from logging import getLogger
@@ -216,6 +216,8 @@ def run_setup_window(icon, dsdl_path=None):
     baudrate.insertItems(0, map(str, STANDARD_BAUD_RATES))
     baudrate.setCurrentText(str(DEFAULT_BAUD_RATE))
 
+    filtered = QCheckBox('Enable Filtering')
+
     dir_selection = DirectorySelectionWidget(win, dsdl_path)
 
     ok = QPushButton('OK', win)
@@ -269,6 +271,7 @@ def run_setup_window(icon, dsdl_path=None):
         kwargs['baudrate'] = baud_rate_value
         kwargs['bitrate'] = int(bitrate.value())
         kwargs['bus_number'] = int(bus_number.value())
+        kwargs['filtered'] = filtered.checkState()
         result_key = str(combo.currentText()).strip()
         if not result_key:
             show_error('Invalid parameters', 'Interface name cannot be empty', 'Please select a valid interface',
@@ -295,6 +298,9 @@ def run_setup_window(icon, dsdl_path=None):
     adapter_layout.addWidget(bitrate, 1, 1)
     adapter_layout.addWidget(QLabel('Adapter baud rate (not applicable to USB):'), 2, 0)
     adapter_layout.addWidget(baudrate, 2, 1)
+    adapter_layout.addWidget(QLabel('Filter for low bandwidth:'), 3, 0)
+    adapter_layout.addWidget(filtered, 3, 1)
+
     adapter_group.setLayout(adapter_layout)
 
     can_layout.addWidget(adapter_group)

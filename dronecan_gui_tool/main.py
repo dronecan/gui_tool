@@ -73,6 +73,7 @@ from . import update_checker
 from .widgets import show_error, get_icon, get_app_icon
 from .widgets.node_monitor import NodeMonitorWidget
 from .widgets.local_node import LocalNodeWidget
+from .widgets.local_node import setup_filtering
 from .widgets.log_message_display import LogMessageDisplayWidget
 from .widgets.bus_monitor import BusMonitorManager
 from .widgets.dynamic_node_id_allocator import DynamicNodeIDAllocatorWidget
@@ -562,7 +563,6 @@ class MainWindow(QMainWindow):
         self._active_data_type_detector.close()
         super(MainWindow, self).closeEvent(qcloseevent)
 
-
 def main():
     logger.info('Starting the application')
     app = QApplication(sys.argv)
@@ -606,6 +606,9 @@ def main():
                                     node_info=node_info,
                                     mode=dronecan.uavcan.protocol.NodeStatus().MODE_OPERATIONAL,
                                     **iface_kwargs)
+
+            if iface_kwargs["filtered"]:
+                setup_filtering(node)
 
             # Making sure the interface is alright
             node.spin(0.1)
