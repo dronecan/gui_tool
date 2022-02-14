@@ -7,7 +7,7 @@
 #
 
 import dronecan
-from PyQt5.QtWidgets import QGroupBox, QLabel, QSpinBox, QHBoxLayout
+from PyQt5.QtWidgets import QGroupBox, QLabel, QSpinBox, QHBoxLayout, QCheckBox
 from PyQt5.QtCore import QTimer
 from logging import getLogger
 from . import make_icon_button, flash
@@ -18,6 +18,23 @@ logger = getLogger(__name__)
 NODE_ID_MIN = 1
 NODE_ID_MAX = 127
 
+def setup_filtering(node):
+    '''setup to filter messages for low bandwidth'''
+    driver = node.can_driver
+    ids = []
+    ids.append(0) # anonymous frames
+    ids.append(dronecan.uavcan.protocol.NodeStatus.default_dtid)
+    ids.append(dronecan.uavcan.protocol.GetNodeInfo.default_dtid)
+    ids.append(dronecan.uavcan.protocol.RestartNode.default_dtid)
+    ids.append(dronecan.uavcan.protocol.param.GetSet.default_dtid)
+    ids.append(dronecan.uavcan.protocol.param.ExecuteOpcode.default_dtid)
+    ids.append(dronecan.uavcan.protocol.file.BeginFirmwareUpdate.default_dtid)
+    ids.append(dronecan.uavcan.protocol.file.Read.default_dtid)
+    ids.append(dronecan.uavcan.protocol.file.GetInfo.default_dtid)
+    ids.append(dronecan.uavcan.protocol.dynamic_node_id.Allocation.default_dtid)
+    ids.append(dronecan.uavcan.protocol.debug.LogMessage.default_dtid)
+    logger.info("Setup %u filter IDs" % len(ids))
+    driver.set_filter_list(ids)
 
 class LocalNodeWidget(QGroupBox):
     def __init__(self, parent, node):
@@ -39,6 +56,23 @@ class LocalNodeWidget(QGroupBox):
         self._node_id_apply = make_icon_button('check', 'Apply local node ID', self,
                                                on_clicked=self._on_node_id_apply_clicked)
 
+        if node.can_driver.get_bus() is not None:
+            # allow for changes to mavcan settings
+            self._busnum_label = QLabel('Bus Number:', self)
+            self._busnum = QSpinBox(self)
+            self._busnum.setMaximum(2)
+            self._busnum.setMinimum(1)
+            self._busnum.setValue(node.can_driver.get_bus())
+            self._busnum.valueChanged.connect(self.change_bus)
+
+            self._filtering_label = QLabel('Low Bandwidth:', self)
+            self._filtering = QCheckBox(self)
+            self._filtering.setTristate(False)
+            filter_list = node.can_driver.get_filter_list()
+            if filter_list is not None and len(filter_list) > 0:
+                self._filtering.setCheckState(2)
+            self._filtering.stateChanged.connect(self.change_filtering)
+
         self._update_timer = QTimer(self)
         self._update_timer.setSingleShot(False)
         self._update_timer.timeout.connect(self._update)
@@ -50,12 +84,30 @@ class LocalNodeWidget(QGroupBox):
         layout.addWidget(self._node_id_label)
         layout.addWidget(self._node_id_spinbox)
         layout.addWidget(self._node_id_apply)
+
+        if node.can_driver.get_bus() is not None:
+            layout.addWidget(self._busnum_label)
+            layout.addWidget(self._busnum)
+            layout.addWidget(self._filtering_label)
+            layout.addWidget(self._filtering)
+
         layout.addStretch(1)
 
         self.setLayout(layout)
 
         flash(self, 'Some functions will be unavailable unless local node ID is set')
 
+    def change_bus(self):
+        '''update bus number'''
+        self._node.can_driver.set_bus(self._busnum.value())
+
+    def change_filtering(self):
+        '''update filtering'''
+        if self._filtering.isChecked():
+            setup_filtering(self._node)
+        else:
+            self._node.can_driver.set_filter_list([])
+        
     def close(self):
         self._node_id_collector.close()
 
