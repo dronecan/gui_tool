@@ -381,8 +381,8 @@ class ConfigParamEditWindow(QDialog):
             if min_val >= -0x80000000 and \
                max_val <= +0x7FFFFFFF:
                 self._value_widget = QSpinBox(self)
-                self._value_widget.setMaximum(max_val)
-                self._value_widget.setMinimum(min_val)
+                self._value_widget.setMaximum(int(max_val))
+                self._value_widget.setMinimum(int(min_val))
                 self._value_widget.setValue(value)
         if value_type == 'real_value':
             min_val = round_float(min_val) if min_val is not None else -3.4028235e+38
