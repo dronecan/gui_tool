@@ -41,7 +41,7 @@ args = dict(
     ],
     install_requires=[
         'setuptools>=18.5',
-        'dronecan>=1.0.7',
+        'dronecan>=1.0.10',
         'pyserial>=3.0',
         'pymavlink>=2.4.20',
         'qtawesome>=0.3.1',
