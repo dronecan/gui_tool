@@ -86,6 +86,7 @@ class ESCPanel(QDialog):
         self._num_sliders.valueChanged.connect(self._update_number_of_sliders)
 
         self._safety_enable = QCheckBox(self)
+        self._arming_enable = QCheckBox(self)
 
         self._bcast_interval = QDoubleSpinBox(self)
         self._bcast_interval.setMinimum(0.01)
@@ -125,6 +126,8 @@ class ESCPanel(QDialog):
         controls_layout.addWidget(self._num_sliders)
         controls_layout.addWidget(QLabel('SendSafety:', self))
         controls_layout.addWidget(self._safety_enable)
+        controls_layout.addWidget(QLabel('SendArming:', self))
+        controls_layout.addWidget(self._arming_enable)
         controls_layout.addWidget(QLabel('Broadcast interval:', self))
         controls_layout.addWidget(self._bcast_interval)
         controls_layout.addWidget(QLabel('sec', self))
@@ -141,6 +144,14 @@ class ESCPanel(QDialog):
     def _do_broadcast(self):
         try:
             if not self._pause.isChecked():
+                if self._safety_enable.checkState():
+                    msg = dronecan.ardupilot.indication.SafetyState()
+                    msg.status = msg.STATUS_SAFETY_OFF
+                    self._node.broadcast(msg)
+                if self._arming_enable.checkState():
+                    msg = dronecan.uavcan.equipment.safety.ArmingStatus()
+                    msg.status = msg.STATUS_FULLY_ARMED
+                    self._node.broadcast(msg)
                 msg = dronecan.uavcan.equipment.esc.RawCommand()
                 for sl in self._sliders:
                     raw_value = sl.get_value() / 100
@@ -149,11 +160,6 @@ class ESCPanel(QDialog):
 
                 self._node.broadcast(msg)
                 self._msg_viewer.setPlainText(dronecan.to_yaml(msg))
-
-                if self._safety_enable.checkState():
-                    msg = dronecan.ardupilot.indication.SafetyState()
-                    msg.status = msg.STATUS_SAFETY_OFF
-                    self._node.broadcast(msg)
             else:
                 self._msg_viewer.setPlainText('Paused')
         except Exception as ex:
