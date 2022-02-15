@@ -122,7 +122,7 @@ class ActuatorPanel(QDialog):
         self._msg_viewer.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         self._bcast_timer = QTimer(self)
-        self._bcast_timer.start(self.DEFAULT_INTERVAL * 1e3)
+        self._bcast_timer.start(int(self.DEFAULT_INTERVAL * 1e3))
         self._bcast_timer.timeout.connect(self._do_broadcast)
 
         layout = QVBoxLayout(self)
