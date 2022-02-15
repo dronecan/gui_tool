@@ -123,3 +123,10 @@ the distribution server.
 ### Code style
 
 Please follow the existing code styles .
+
+## History
+
+Much of the development of this tool is based upon original work by
+Pavel Kirienko and others from the UAVCAN Development Team. See
+https://github.com/UAVCAN/gui_tool for contributors.
+
