@@ -218,6 +218,11 @@ def run_setup_window(icon, dsdl_path=None):
 
     filtered = QCheckBox('Enable Filtering')
 
+    target_system = QSpinBox(win)
+    target_system.setMaximum(255)
+    target_system.setMinimum(0)
+    target_system.setValue(0)
+    
     dir_selection = DirectorySelectionWidget(win, dsdl_path)
 
     ok = QPushButton('OK', win)
@@ -272,6 +277,7 @@ def run_setup_window(icon, dsdl_path=None):
         kwargs['bitrate'] = int(bitrate.value())
         kwargs['bus_number'] = int(bus_number.value())
         kwargs['filtered'] = filtered.checkState()
+        kwargs['mavlink_target_system'] = int(target_system.value())
         result_key = str(combo.currentText()).strip()
         if not result_key:
             show_error('Invalid parameters', 'Interface name cannot be empty', 'Please select a valid interface',
@@ -300,6 +306,8 @@ def run_setup_window(icon, dsdl_path=None):
     adapter_layout.addWidget(baudrate, 2, 1)
     adapter_layout.addWidget(QLabel('Filter for low bandwidth:'), 3, 0)
     adapter_layout.addWidget(filtered, 3, 1)
+    adapter_layout.addWidget(QLabel('MAVLink target system (0 for auto):'), 4, 0)
+    adapter_layout.addWidget(target_system, 4, 1)
 
     adapter_group.setLayout(adapter_layout)
 
