@@ -56,23 +56,6 @@ class LocalNodeWidget(QGroupBox):
         self._node_id_apply = make_icon_button('check', 'Apply local node ID', self,
                                                on_clicked=self._on_node_id_apply_clicked)
 
-        if node.can_driver.get_bus() is not None:
-            # allow for changes to mavcan settings
-            self._busnum_label = QLabel('Bus Number:', self)
-            self._busnum = QSpinBox(self)
-            self._busnum.setMaximum(2)
-            self._busnum.setMinimum(1)
-            self._busnum.setValue(node.can_driver.get_bus())
-            self._busnum.valueChanged.connect(self.change_bus)
-
-            self._filtering_label = QLabel('Low Bandwidth:', self)
-            self._filtering = QCheckBox(self)
-            self._filtering.setTristate(False)
-            filter_list = node.can_driver.get_filter_list()
-            if filter_list is not None and len(filter_list) > 0:
-                self._filtering.setCheckState(2)
-            self._filtering.stateChanged.connect(self.change_filtering)
-
         self._update_timer = QTimer(self)
         self._update_timer.setSingleShot(False)
         self._update_timer.timeout.connect(self._update)
@@ -84,12 +67,6 @@ class LocalNodeWidget(QGroupBox):
         layout.addWidget(self._node_id_label)
         layout.addWidget(self._node_id_spinbox)
         layout.addWidget(self._node_id_apply)
-
-        if node.can_driver.get_bus() is not None:
-            layout.addWidget(self._busnum_label)
-            layout.addWidget(self._busnum)
-            layout.addWidget(self._filtering_label)
-            layout.addWidget(self._filtering)
 
         layout.addStretch(1)
 
@@ -141,3 +118,64 @@ class LocalNodeWidget(QGroupBox):
             self._node.node_id = nid
             logger.info('Node ID: %s', self._node.node_id)
         self._update()
+
+class AdapterSettingsWidget(QGroupBox):
+    def __init__(self, parent, node):
+        super(AdapterSettingsWidget, self).__init__(parent)
+        self.setTitle('Adapter Settings')
+
+        self._node = node
+
+        self._canfd_label = QLabel('Send CANFD:', self)
+        self._canfd = QCheckBox(self)
+        self._canfd.setTristate(False)
+        self._canfd.stateChanged.connect(self.change_canfd)
+
+        if node.can_driver.get_bus() is not None:
+            # allow for changes to mavcan settings
+            self._busnum_label = QLabel('Bus Number:', self)
+            self._busnum = QSpinBox(self)
+            self._busnum.setMaximum(2)
+            self._busnum.setMinimum(1)
+            self._busnum.setValue(node.can_driver.get_bus())
+            self._busnum.valueChanged.connect(self.change_bus)
+
+            self._filtering_label = QLabel('Low Bandwidth:', self)
+            self._filtering = QCheckBox(self)
+            self._filtering.setTristate(False)
+            filter_list = node.can_driver.get_filter_list()
+            if filter_list is not None and len(filter_list) > 0:
+                self._filtering.setCheckState(2)
+            self._filtering.stateChanged.connect(self.change_filtering)
+
+        layout = QHBoxLayout(self)
+        layout.addWidget(self._canfd_label)
+        layout.addWidget(self._canfd)
+
+        if node.can_driver.get_bus() is not None:
+            layout.addWidget(self._busnum_label)
+            layout.addWidget(self._busnum)
+            layout.addWidget(self._filtering_label)
+            layout.addWidget(self._filtering)
+
+        layout.addStretch(1)
+
+        self.setLayout(layout)
+
+    def change_bus(self):
+        '''update bus number'''
+        self._node.can_driver.set_bus(self._busnum.value())
+
+    def change_filtering(self):
+        '''update filtering'''
+        if self._filtering.isChecked():
+            setup_filtering(self._node)
+        else:
+            self._node.can_driver.set_filter_list([])
+
+    def change_canfd(self):
+        '''change canfd settings'''
+        self._node.set_canfd(self._canfd.isChecked())
+
+    def close(self):
+        pass
