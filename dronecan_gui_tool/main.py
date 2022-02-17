@@ -73,6 +73,7 @@ from . import update_checker
 from .widgets import show_error, get_icon, get_app_icon
 from .widgets.node_monitor import NodeMonitorWidget
 from .widgets.local_node import LocalNodeWidget
+from .widgets.local_node import AdapterSettingsWidget
 from .widgets.local_node import setup_filtering
 from .widgets.log_message_display import LogMessageDisplayWidget
 from .widgets.bus_monitor import BusMonitorManager
@@ -118,6 +119,7 @@ class MainWindow(QMainWindow):
         self._node_monitor_widget.on_info_window_requested = self._show_node_window
 
         self._local_node_widget = LocalNodeWidget(self, node)
+        self._adapter_settings_widget = AdapterSettingsWidget(self, node)
         self._log_message_widget = LogMessageDisplayWidget(self, node)
         self._dynamic_node_id_allocation_widget = DynamicNodeIDAllocatorWidget(self, node,
                                                                                self._node_monitor_widget.monitor)
@@ -229,6 +231,7 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(make_splitter(Qt.Horizontal,
                                             make_vbox(self._local_node_widget,
+                                                      self._adapter_settings_widget,
                                                       self._node_monitor_widget,
                                                       self._file_server_widget),
                                             make_splitter(Qt.Vertical,
