@@ -34,14 +34,19 @@ def _list_3rd_party():
     except ImportError:
         qtconsole_version = 'N/A'
         ipython_version = 'N/A'
+    try:
+        from pymavlink import __version__ as pymavlink_version
+    except ImportError:
+        pymavlink_version = 'N/A'
 
     return [
-        ('PyDroneCAN',    dronecan.__version__,     'MIT',      'http://dronecan.org/Implementations/Pydronecan'),
+        ('PyDroneCAN',  dronecan.__version__,   'MIT',      'http://dronecan.org/Implementations/Pydronecan'),
         ('PyQt5',       PYQT_VERSION_STR,       'GPLv3',    'https://www.riverbankcomputing.com/software/pyqt/intro'),
         ('PyQtGraph',   pyqtgraph.__version__,  'MIT',      'http://www.pyqtgraph.org/'),
         ('QtAwesome',   qtawesome.__version__,  'MIT',      'https://github.com/spyder-ide/qtawesome'),
         ('QtConsole',   qtconsole_version,      'BSD',      'http://jupyter.org'),
         ('IPython',     ipython_version,        'BSD',      'https://ipython.org'),
+        ('pymavlink',   pymavlink_version,      'LGPLv3+',  'http://github.com/ardupilot/pymavlink'),
     ]
 
 
