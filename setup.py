@@ -35,10 +35,6 @@ args = dict(
     name=PACKAGE_NAME,
     version='.'.join(map(str, __version__)),
     packages=find_packages(),
-    setup_requires=[
-        'setuptools',
-        'setuptools_git>=1.0',
-    ],
     install_requires=[
         'setuptools>=18.5',
         'dronecan>=1.0.14',
