@@ -28,6 +28,9 @@ from version import __version__
 
 assert sys.version_info[0] == 3, 'Python 3 is required'
 
+with open("README.md", "r", encoding = "utf-8") as fh:
+    long_description = fh.read()
+
 #
 # Setup args common for all targets
 #
@@ -63,6 +66,8 @@ args = dict(
 
     # Meta fields, they have no technical meaning
     description='DroneCAN Bus Management and Diagnostics App',
+    long_description = long_description,
+    long_description_content_type = "text/markdown",
     author='DroneCAN Development Team',
     author_email='dronecan.devel@gmail.com',
     url='http://dronecan.org',
