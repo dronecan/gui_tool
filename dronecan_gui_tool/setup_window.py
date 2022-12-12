@@ -105,6 +105,14 @@ def list_ifaces():
         for x in mifaces:
             out[x] = x
 
+        try:
+            from can import detect_available_configs
+            for interface in detect_available_configs():
+                if interface['interface'] == "pcan":
+                    out[interface['channel']] = interface['channel']
+        except Exception as ex:
+            logger.warning('Could not load can interfaces: %s', ex, exc_info=True)
+
         return out
 
 

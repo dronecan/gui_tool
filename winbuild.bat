@@ -18,6 +18,7 @@ python --version
 python -m pip install -U cx_Freeze
 python -m pip install -U pymavlink
 python -m pip install -U pywin32
+python -m pip install -U python-can
 python -m pip install -U .
 
 rem show pip sizes for debug
