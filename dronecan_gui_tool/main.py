@@ -20,6 +20,7 @@ parser = ArgumentParser(description='DroneCAN GUI tool')
 
 parser.add_argument("--debug", action='store_true', help="enable debugging")
 parser.add_argument("--dsdl", help="path to custom DSDL")
+parser.add_argument("--signing-passphrase", help="MAVLink2 signing passphrase", default=None)
 
 args = parser.parse_args()
 
@@ -129,6 +130,9 @@ class MainWindow(QMainWindow):
         self._bus_monitor_manager = BusMonitorManager(self._node, iface_name)
         # Console manager depends on other stuff via context, initialize it last
         self._console_manager = ConsoleManager(self._make_console_context)
+
+        if args.signing_passphrase is not None:
+            self._node.can_driver.set_signing_passphrase(args.signing_passphrase)
 
         #
         # File menu
