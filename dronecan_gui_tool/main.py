@@ -97,7 +97,7 @@ class MainWindow(QMainWindow):
     MAX_SUCCESSIVE_NODE_ERRORS = 1000
 
     # noinspection PyTypeChecker,PyCallByClass,PyUnresolvedReferences
-    def __init__(self, node, iface_name):
+    def __init__(self, node, iface_name, iface_kwargs):
         # Parent
         super(MainWindow, self).__init__()
         self.setWindowTitle('DroneCAN GUI Tool')
@@ -133,6 +133,8 @@ class MainWindow(QMainWindow):
 
         if args.signing_passphrase is not None:
             self._node.can_driver.set_signing_passphrase(args.signing_passphrase)
+        elif iface_kwargs['mavlink_signing_key']:
+            self._node.can_driver.set_signing_passphrase(iface_kwargs['mavlink_signing_key'])
 
         #
         # File menu
@@ -630,7 +632,7 @@ def main():
             break
 
     logger.info('Creating main window; iface %r', iface)
-    window = MainWindow(node, iface)
+    window = MainWindow(node, iface, iface_kwargs)
     window.show()
 
     try:
