@@ -84,6 +84,7 @@ def list_ifaces():
             ifaces = _linux_parse_proc_net_dev(ifaces)       # Fallback
 
         ifaces += _mavcan_interfaces()
+        ifaces += ["mcast:0", "mcast:1"]
 
         out = OrderedDict()
         for x in ifaces:
