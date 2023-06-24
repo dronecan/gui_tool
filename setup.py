@@ -181,8 +181,8 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
         cx_Freeze.Executable(os.path.join('bin', PACKAGE_NAME),
                              base='Win32GUI',
                              icon='icons/logo.ico',
-                             shortcutName=HUMAN_FRIENDLY_NAME,
-                             shortcutDir='ProgramMenuFolder'),
+                             shortcut_name=HUMAN_FRIENDLY_NAME,
+                             shortcut_dir='ProgramMenuFolder'),
     ]
     # Dispatching to cx_Freeze only if MSI build was requested explicitly. Otherwise continue with regular setup.
     # This is done in order to be able to install dependencies with regular setuptools.
