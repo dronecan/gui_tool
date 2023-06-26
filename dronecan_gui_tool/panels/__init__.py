@@ -12,7 +12,7 @@ from ..widgets import show_error
 from . import esc_panel
 from . import actuator_panel
 from . import RTK_panel
-
+from . import uCenter_panel
 
 class PanelDescriptor:
     def __init__(self, module):
@@ -36,5 +36,6 @@ class PanelDescriptor:
 PANELS = sorted([
     PanelDescriptor(esc_panel),
     PanelDescriptor(actuator_panel),
-    PanelDescriptor(RTK_panel)
+    PanelDescriptor(RTK_panel),
+    PanelDescriptor(uCenter_panel)
 ], key=lambda x: x.name)
