@@ -13,6 +13,7 @@ from . import esc_panel
 from . import actuator_panel
 from . import RTK_panel
 from . import serial_panel
+from . import stats_panel
 
 class PanelDescriptor:
     def __init__(self, module):
@@ -37,5 +38,6 @@ PANELS = sorted([
     PanelDescriptor(esc_panel),
     PanelDescriptor(actuator_panel),
     PanelDescriptor(RTK_panel),
-    PanelDescriptor(serial_panel)
+    PanelDescriptor(serial_panel),
+    PanelDescriptor(stats_panel)
 ], key=lambda x: x.name)
