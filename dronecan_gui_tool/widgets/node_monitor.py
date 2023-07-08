@@ -16,6 +16,8 @@ from logging import getLogger
 
 logger = getLogger(__name__)
 
+app_node_monitor = None
+
 
 def node_mode_to_color(mode):
     s = dronecan.uavcan.protocol.NodeStatus()
@@ -85,6 +87,8 @@ class NodeTable(BasicTable):
         self.on_enter_pressed = self._on_enter
 
         self._monitor = dronecan.app.node_monitor.NodeMonitor(node)
+        global app_node_monitor
+        app_node_monitor = self._monitor
 
         self._timer = QTimer(self)
         self._timer.setSingleShot(False)
