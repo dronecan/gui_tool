@@ -183,7 +183,7 @@ class serialPanel(QDialog):
                 break
             try:
                 self.sock.send(buf)
-            except Exception:
+            except Exception as ex:
                 print("Closing: ", ex)
                 self.sock = None
                 if self.tunnel is not None:
