@@ -33,7 +33,6 @@ class serialPanel(QDialog):
         self.sock = None
         self.listen_sock = None
         self.addr = None
-        self.logfile = None
         self.num_rx_bytes = 0
         self.num_tx_bytes = 0
         self.node = node
@@ -51,6 +50,7 @@ class serialPanel(QDialog):
         self.lock_select = QComboBox()
         self.lock_select.addItem("UnLocked")
         self.lock_select.addItem("Locked")
+        self.lock_select.currentIndexChanged.connect(self.update_locked)
 
         self.port_select = QSpinBox()
         self.port_select.setMinimum(1)
@@ -150,6 +150,12 @@ class serialPanel(QDialog):
             self.tunnel.baudrate = baud
             print("change baudrate to %u" % baud)
 
+    def update_locked(self):
+        '''callback when locked state changes'''
+        if self.tunnel:
+            locked = self.lock_select.currentText() == "Locked"
+            self.tunnel.lock_port = locked
+
     def process_socket(self):
         '''process data from the socket'''
         while True:
@@ -218,11 +224,6 @@ class serialPanel(QDialog):
                                                   node=self.node,
                                                   lock_port=locked, baudrate=self.get_baudrate())
             print("ucenter connection from %s" % str(self.addr))
-            try:
-                self.logfile = open("ubx.dat", "wb")
-            except Exception:
-                pass
-
 
 
 def spawn(parent, node):
