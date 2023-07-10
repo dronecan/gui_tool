@@ -58,8 +58,8 @@ CAN Stats shows the statistics of the CAN interface.
         self.setLayout(layout)
         self.resize(800, 800)
         self.node = node
-        node.add_handler(dronecan.dronecan.protocol.Stats, self.on_dronecan_stats)
-        node.add_handler(dronecan.dronecan.protocol.CanStats, self.on_can_stats)
+        self.handlers = [node.add_handler(dronecan.dronecan.protocol.Stats, self.on_dronecan_stats),
+                         node.add_handler(dronecan.dronecan.protocol.CanStats, self.on_can_stats)]
 
     def on_dronecan_stats(self, msg):
         '''display dronecan stats'''
@@ -72,14 +72,12 @@ CAN Stats shows the statistics of the CAN interface.
         self.can_stats_table.update((nodeid,msg.message.interface), [nodeid, msg.message.interface, msg.message.tx_requests, msg.message.tx_rejected, msg.message.tx_overflow, msg.message.tx_success, msg.message.tx_timedout, msg.message.tx_abort, msg.message.rx_received, msg.message.rx_overflow, msg.message.rx_errors, msg.message.busoff_errors])
 
     def __del__(self):
+        for h in self.handlers:
+            h.remove()
         global _singleton
         _singleton = None
-        self.node.remove_handlers(dronecan.dronecan.protocol.Stats)
-        self.node.remove_handlers(dronecan.dronecan.protocol.CanStats)
 
     def closeEvent(self, event):
-        global _singleton
-        _singleton = None
         super(StatsPanel, self).closeEvent(event)
         self.__del__()
 

@@ -124,10 +124,10 @@ The distance should match the actual distance between the antennas.
         self.setLayout(layout)
         self.resize(self.minimumWidth(), self.minimumHeight())
 
-        node.add_handler(dronecan.uavcan.equipment.gnss.Fix2, self.handle_Fix2)
-        node.add_handler(dronecan.ardupilot.gnss.MovingBaselineData, self.handle_RTCM_MovingBase)
-        node.add_handler(dronecan.uavcan.equipment.gnss.RTCMStream, self.handle_RTCM_Stream)
-        node.add_handler(dronecan.ardupilot.gnss.RelPosHeading, self.handle_RelPos)
+        self.handlers = [node.add_handler(dronecan.uavcan.equipment.gnss.Fix2, self.handle_Fix2),
+                         node.add_handler(dronecan.ardupilot.gnss.MovingBaselineData, self.handle_RTCM_MovingBase),
+                         node.add_handler(dronecan.uavcan.equipment.gnss.RTCMStream, self.handle_RTCM_Stream),
+                         node.add_handler(dronecan.ardupilot.gnss.RelPosHeading, self.handle_RelPos)]
 
     def handle_Fix2(self, msg):
         '''display Fix2 data in table'''
@@ -164,14 +164,14 @@ The distance should match the actual distance between the antennas.
 
         
     def __del__(self):
+        for h in self.handlers:
+            h.remove()
         global _singleton
         _singleton = None
 
     def closeEvent(self, event):
-        global _singleton
-        _singleton = None
         super(RTKPanel, self).closeEvent(event)
-
+        self.__del__()
 
 def spawn(parent, node):
     global _singleton
