@@ -9,9 +9,10 @@
 import dronecan
 from functools import partial
 from PyQt5.QtWidgets import QGridLayout, QWidget, QLabel, QDialog, \
-     QTableWidget, QVBoxLayout, QGroupBox, QTableWidgetItem
+     QVBoxLayout, QGroupBox
 from PyQt5.QtCore import Qt, QTimer
 from ..widgets import get_icon
+from ..widgets import table_display
 from . import rtcm3
 import time
 
@@ -21,65 +22,12 @@ PANEL_NAME = 'RTK Panel'
 
 _singleton = None
 
-class TableDisplay(QTableWidget):
-    '''table viewer'''
-    def __init__(self, headers, expire_time=2.0):
-        QTableWidget.__init__(self, 0, len(headers))
-        self.headers = headers
-        self.row_keys = []
-        self.timestamps = {}
-        self.setHorizontalHeaderLabels(self.headers)
-        self.resizeColumnsToContents()
-        self.resizeRowsToContents()
-        self.expire_time = expire_time
-        self.show()
-        if self.expire_time is not None:
-            QTimer.singleShot(int(expire_time*500), self.check_expired)
-
-    def update(self, row_key, row):
-        '''update a row'''
-        if not row_key in self.row_keys:
-            # new row
-            self.timestamps[row_key] = time.time()
-            self.insertRow(len(self.row_keys))
-            self.row_keys.append(row_key)
-
-        self.timestamps[row_key] = time.time()
-        row_idx = self.row_keys.index(row_key)
-        for i in range(len(row)):
-            self.setItem(row_idx, i, QTableWidgetItem(str(row[i])))
-
-        self.resizeColumnsToContents()
-        self.resizeRowsToContents()
-        self.show()
-
-    def remove_row(self, row_key):
-        '''remove a row'''
-        if not row_key in self.row_keys:
-            return
-        row_idx = self.row_keys.index(row_key)
-        if row_idx != -1:
-            self.row_keys.pop(row_idx)
-            self.removeRow(row_idx)
-
-    def check_expired(self):
-        '''check for expired rows'''
-        keys = list(self.timestamps.keys())
-        now = time.time()
-        for key in keys:
-            if now - self.timestamps[key] >= self.expire_time:
-                # remove old rows
-                self.timestamps.pop(key)
-                self.remove_row(key)
-        QTimer.singleShot(int(self.expire_time*500), self.check_expired)
-
-
 class RTCMData:
     def __init__(self):
         self.last_time = {}
         self.dt = {}
         self.decoder = rtcm3.RTCM3()
-        self.table = TableDisplay(['Node','RTCM_ID','Len','Rate(Hz)'])
+        self.table = table_display.TableDisplay(['Node','RTCM_ID','Len','Rate(Hz)'])
 
     def handle_msg(self, msg):
         nodeid = msg.transfer.source_node_id
@@ -123,7 +71,7 @@ class RTKPanel(QDialog):
         layout = QVBoxLayout()
 
         # Fix2 display
-        self.fix2_table = TableDisplay(['Node','Status','NumSats', 'Rate(Hz)'])
+        self.fix2_table = table_display.TableDisplay(['Node','Status','NumSats', 'Rate(Hz)'])
         self.fix2_last_time = {}
         self.fix2_dt = {}
 
@@ -159,7 +107,7 @@ The RTCMStream message provide correction data from a ground station to a GPS to
 it to get a global RTK fix.
 ''')
 
-        self.relpos_table = TableDisplay(['Node','RelHeading','Dist(m)', 'RelDown(m)'])
+        self.relpos_table = table_display.TableDisplay(['Node','RelHeading','Dist(m)', 'RelDown(m)'])
         relpos_group = QGroupBox('RelPosHeading Status', self)
         relpos_layout = QGridLayout()
         relpos_layout.addWidget(self.relpos_table)
