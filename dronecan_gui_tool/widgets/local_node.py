@@ -34,6 +34,8 @@ def setup_filtering(node):
     ids.append(dronecan.uavcan.protocol.dynamic_node_id.Allocation.default_dtid)
     ids.append(dronecan.uavcan.protocol.debug.LogMessage.default_dtid)
     ids.append(dronecan.uavcan.tunnel.Targetted.default_dtid)
+    ids.append(dronecan.dronecan.protocol.Stats.default_dtid)
+    ids.append(dronecan.dronecan.protocol.CanStats.default_dtid)
     logger.info("Setup %u filter IDs" % len(ids))
     driver.set_filter_list(ids)
 
