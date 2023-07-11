@@ -43,7 +43,7 @@ class serialPanel(QDialog):
 
         self.node_select = QComboBox()
         self.baud_select = QComboBox()
-        for b in ["Unchanged", 9600, 19200, 38400, 57600, 115200, 230400, 430600, 921600]:
+        for b in ["Unchanged", 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]:
             self.baud_select.addItem(str(b))
         self.baud_select.currentIndexChanged.connect(self.change_baud)
 
