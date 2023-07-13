@@ -749,7 +749,7 @@ class ConfigParams(QGroupBox):
                 self.window().show_message('Opcode execution response for %s: %s', opcode_str, e.response)
 
         try:
-            self._node.request(request, self._target_node_id, callback, priority=REQUEST_PRIORITY)
+            self._node.request(request, self._target_node_id, callback, priority=REQUEST_PRIORITY, timeout=5000.0)
             self.window().show_message('Param opcode %s requested', opcode_str)
         except Exception as ex:
             show_error('Node error', 'Could not send param opcode execution request', ex, self)
