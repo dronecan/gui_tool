@@ -338,7 +338,7 @@ class BusMonitorWindow(QMainWindow):
         QTimer.singleShot(500, self._update_widget_sizes)
 
     def _update_widget_sizes(self):
-        max_footer_height = self.centralWidget().height() * 0.4
+        max_footer_height = int(self.centralWidget().height() * 0.4)
         self._footer_splitter.setMaximumHeight(max_footer_height)
 
     def resizeEvent(self, qresizeevent):
