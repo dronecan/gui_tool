@@ -253,11 +253,10 @@ class UBloxMessage:
             return False
         if len(self._buf) > 1 and self._buf[1] != PREAMBLE2:
             return False
-        if self.needed_bytes() == 0 and not self.valid():
-            if len(self._buf) > 8:
-                self.debug(1, "bad checksum len=%u needed=%u" % (len(self._buf), self.needed_bytes()))
-            else:
-                self.debug(1, "bad len len=%u needed=%u" % (len(self._buf), self.needed_bytes()))
+        needed = self.needed_bytes()
+        if needed > 1000:
+            return False
+        if needed == 0 and not self.valid():
             return False
         return True
 
@@ -372,7 +371,6 @@ class serialPanel(QDialog):
         self.tx_bytes.setReadOnly(True)
 
         self.ublox_handling = QCheckBox(self)
-        self.last_ublox_write_t = time.time()
 
         layout.addLayout(self.labelWidget('Node', self.node_select))
         layout.addLayout(self.labelWidget('UART Locking', self.lock_select))
@@ -511,20 +509,14 @@ class serialPanel(QDialog):
         mbuf = self.ublox_msg_in.raw()
         mlen = len(mbuf)
 
-        # write message to the tunnel
-        self.tunnel.write(mbuf)
-
         # avoid flooding the serial port by sleeping for a bit if we are
         # getting data from uCenter faster than the serial port can handle it
         port_rate = self.tunnel.baudrate / 10.0
         delay_needed = mlen / port_rate
+        time.sleep(delay_needed)
 
-        now = time.time()
-        dt = now - self.last_ublox_write_t
-        self.last_ublox_write_t = now
-
-        if delay_needed > dt:
-            time.sleep(delay_needed-dt)
+        # write message to the tunnel
+        self.tunnel.write(mbuf)
 
         # interpret the message to see if we should change baudrate
         mtype = self.ublox_msg_in.msg_type()
@@ -562,12 +554,12 @@ class serialPanel(QDialog):
                 buf = self.sock.recv(120)
             except socket.error as ex:
                 if ex.errno not in [ errno.EAGAIN, errno.EWOULDBLOCK ]:
-                    print("Closing: ", ex)
-                    self.sock = None
-                    if self.tunnel is not None:
-                        self.tunnel.close()
-                        self.tunnel = None
+                    self.close_socket()
                 return
+            except Exception:
+                self.close_socket()
+                return
+
             if buf is None or len(buf) == 0:
                 break
             if self.ublox_handling.checkState():
@@ -588,16 +580,23 @@ class serialPanel(QDialog):
             try:
                 self.sock.send(buf)
                 self.handle_ublox_data_out(buf)
-            except Exception as ex:
-                print("Closing: ", ex)
-                self.sock = None
-                if self.tunnel is not None:
-                    self.tunnel.close()
-                    self.tunnel = None
+            except Exception:
+                self.close_socket()
                 return
 
             self.num_rx_bytes += len(buf)
             self.rx_bytes.setText("%u" % self.num_rx_bytes)
+
+    def close_socket(self):
+        '''close the socket on errors'''
+        print("Closing socket")
+        self.state.setText("disconnected")
+        if self.sock is not None:
+            self.sock.close()
+            self.sock = None
+        if self.tunnel is not None:
+            self.tunnel.close()
+            self.tunnel = None
             
     def check_connection(self):
         '''called at 100Hz to process data'''
