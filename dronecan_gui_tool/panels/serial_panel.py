@@ -451,12 +451,8 @@ class serialPanel(QDialog):
         '''callback when selected baud rate changes'''
         if self.tunnel:
             baud = self.get_baudrate()
-            self.tunnel.baudrate = baud
             print("change baudrate to %u" % baud)
-            if self.ublox_handling.checkState():
-                for b in [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]:
-                    self.send_ublox_baud(b, baud)
-                    time.sleep(0.01)
+            self.tunnel.baudrate = baud
 
     def update_locked(self):
         '''callback when locked state changes'''
@@ -504,6 +500,13 @@ class serialPanel(QDialog):
                 self.handle_ublox_message_out()
                 self.ublox_msg_out = UBloxMessage()
 
+    def delay(self, delay_s):
+        t0 = time.time()
+        while time.time() - t0 < delay_s:
+            # keep the link alive
+            self.tunnel.send_bytes(bytearray())
+            time.sleep(0.01)
+
     def handle_ublox_message_in(self):
         '''handle a uBlox message from uCenter'''
         mbuf = self.ublox_msg_in.raw()
@@ -513,7 +516,7 @@ class serialPanel(QDialog):
         # getting data from uCenter faster than the serial port can handle it
         port_rate = self.tunnel.baudrate / 10.0
         delay_needed = mlen / port_rate
-        time.sleep(delay_needed)
+        self.delay(delay_needed)
 
         # write message to the tunnel
         self.tunnel.write(mbuf)
