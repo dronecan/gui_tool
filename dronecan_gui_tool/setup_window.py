@@ -11,7 +11,7 @@ import glob
 import time
 import threading
 import copy
-from .widgets import show_error, get_monospace_font
+from .widgets import show_error, get_monospace_font, directory_selection
 from PyQt5.QtWidgets import QComboBox, QCompleter, QDialog, QDirModel, QFileDialog, QGroupBox, QHBoxLayout, QLabel, \
     QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QGridLayout, QCheckBox
 from qtwidgets import PasswordEdit
@@ -150,40 +150,6 @@ class BackgroundIfaceListUpdater:
             return copy.copy(self._ifaces)
 
 
-class DirectorySelectionWidget(QGroupBox):
-    def __init__(self, parent, dsdl_path=None):
-        super(DirectorySelectionWidget, self).__init__('Location of custom DSDL definitions [optional]', parent)
-        self._dir_selection = dsdl_path
-        dir_textbox = QLineEdit(self)
-        dir_textbox.setText(self._dir_selection)
-
-        dir_text_completer = QCompleter(self)
-        dir_text_completer.setCaseSensitivity(Qt.CaseSensitive)
-        dir_text_completer.setModel(QDirModel(self))
-        dir_textbox.setCompleter(dir_text_completer)
-
-        def on_edit():
-            self._dir_selection = str(dir_textbox.text())
-
-        dir_textbox.textChanged.connect(on_edit)
-
-        dir_browser = QPushButton('Browse', self)
-
-        def on_browse():
-            self._dir_selection = str(QFileDialog.getExistingDirectory(self, 'Select Directory'))
-            dir_textbox.setText(self._dir_selection)
-
-        dir_browser.clicked.connect(on_browse)
-
-        layout = QHBoxLayout(self)
-        layout.addWidget(dir_textbox)
-        layout.addWidget(dir_browser)
-        self.setLayout(layout)
-
-    def get_selection(self):
-        return self._dir_selection
-
-
 def run_setup_window(icon, dsdl_path=None):
     win = QDialog()
     win.setWindowTitle('Application Setup')
@@ -235,7 +201,7 @@ def run_setup_window(icon, dsdl_path=None):
 
     signing_key = PasswordEdit(win)
 
-    dir_selection = DirectorySelectionWidget(win, dsdl_path)
+    dir_selection = directory_selection.DirectorySelectionWidget(win, dsdl_path, directory_only=True)
 
     ok = QPushButton('OK', win)
 

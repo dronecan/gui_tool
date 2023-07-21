@@ -47,6 +47,7 @@ args = dict(
         'qtconsole>=4.2.0',
         'pyyaml>=5.1',
         'easywebdav>=1.2',
+        'pymonocypher',
         'numpy',
         'pyqt5',
         'traitlets',
