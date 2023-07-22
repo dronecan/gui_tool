@@ -108,7 +108,7 @@ class RemoteIDPanel(QDialog):
     def get_session_key_response(self, reply):
         '''handle session key response'''
         if not reply:
-            self.status_update("timed out")
+            self.status_update("session key timed out")
             return
         self.session_key = bytearray(reply.response.data)
         self.status_update("Got session key")
@@ -153,16 +153,16 @@ class RemoteIDPanel(QDialog):
             sequence=self.sequence,
             operation=SECURE_COMMAND_GET_REMOTEID_SESSION_KEY,
             sig_length=len(sig),
-            data=sig,
-            timeout=self.timeout),
+            data=sig),
             self.get_target_node(),
-            self.get_session_key_response)
+            self.get_session_key_response,
+            timeout=self.timeout)
         self.sequence = (self.sequence+1) % (1<<32)
         print("Requested session key")
 
     def config_change_response(self, reply):
         if not reply:
-            self.status_update("timed out")
+            self.status_update("config change timed out")
             return
         result_map = {
             0: "ACCEPTED",
@@ -181,10 +181,10 @@ class RemoteIDPanel(QDialog):
             sequence=self.sequence,
             operation=SECURE_COMMAND_SET_REMOTEID_CONFIG,
             sig_length=len(sig),
-            data=req+sig,
-            timeout=self.timeout),
+            data=req+sig),
             self.get_target_node(),
-            self.config_change_response)
+            self.config_change_response,
+            timeout=self.timeout)
         self.sequence = (self.sequence+1) % (1<<32)
         self.status_update("Requested config change")
 
