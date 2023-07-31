@@ -104,6 +104,7 @@ def list_ifaces():
                 out[port.description()] = port.systemLocation()
 
         mifaces = _mavcan_interfaces()
+        mifaces += ["mcast:0", "mcast:1"]
         for x in mifaces:
             out[x] = x
 
