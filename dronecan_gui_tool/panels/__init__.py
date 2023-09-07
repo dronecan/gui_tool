@@ -15,6 +15,7 @@ from . import RTK_panel
 from . import serial_panel
 from . import stats_panel
 from . import RemoteID_panel
+from . import hobbywing_esc
 
 class PanelDescriptor:
     def __init__(self, module):
@@ -35,11 +36,12 @@ class PanelDescriptor:
             show_error('Panel error', 'Could not spawn panel', ex)
 
 
-PANELS = sorted([
+PANELS = [
     PanelDescriptor(esc_panel),
     PanelDescriptor(actuator_panel),
     PanelDescriptor(RTK_panel),
     PanelDescriptor(serial_panel),
     PanelDescriptor(stats_panel),
-    PanelDescriptor(RemoteID_panel)
-], key=lambda x: x.name)
+    PanelDescriptor(RemoteID_panel),
+    PanelDescriptor(hobbywing_esc)
+]
