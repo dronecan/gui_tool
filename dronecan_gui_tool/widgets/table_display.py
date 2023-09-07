@@ -19,6 +19,7 @@ class TableDisplay(QTableWidget):
         self.resizeRowsToContents()
         self.expire_time = expire_time
         self.show()
+        self.data = {}
         if self.expire_time is not None:
             QTimer.singleShot(int(expire_time*500), self.check_expired)
 
@@ -32,12 +33,24 @@ class TableDisplay(QTableWidget):
 
         self.timestamps[row_key] = time.time()
         row_idx = self.row_keys.index(row_key)
+        self.data[row_key] = row
         for i in range(len(row)):
             self.setItem(row_idx, i, QTableWidgetItem(str(row[i])))
 
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
         self.show()
+
+    def get(self, row_key):
+        '''get current data for a row'''
+        return self.data.get(row_key,None)
+
+    def get_selected(self):
+        '''get the selected row key'''
+        row = self.currentRow()
+        if row is None:
+            return None
+        return self.row_keys[row]
 
     def remove_row(self, row_key):
         '''remove a row'''
