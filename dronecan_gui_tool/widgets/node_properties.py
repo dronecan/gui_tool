@@ -658,7 +658,7 @@ class ConfigParams(QGroupBox):
         elif value_type == 'real_value':
             return str(value.real_value)
         elif value_type == 'boolean_value':
-            return str(value.boolean_value)
+            return 'True' if value.boolean_value else 'False'
         elif value_type == 'string_value':
             return value.string_value
         else:
@@ -699,7 +699,7 @@ class ConfigParams(QGroupBox):
         elif value_type == 'real_value':
             v.real_value = float(str_value)
         elif value_type == 'boolean_value':
-            v.boolean_value = bool(str_value)
+            v.boolean_value = str_value.lower() in ['true', '1', 't', 'y', 'yes']
         elif value_type == 'string_value':
             v.string_value = str_value
         else:
