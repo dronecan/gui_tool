@@ -107,7 +107,10 @@ The RTCMStream message provide correction data from a ground station to a GPS to
 it to get a global RTK fix.
 ''')
 
-        self.relpos_table = table_display.TableDisplay(['Node','RelHeading','Dist(m)', 'RelDown(m)'])
+        self.relpos_table = table_display.TableDisplay(['Node','RelHeading','Dist(m)','RelDown(m)','Rate(Hz)'])
+        self.relpos_last_time = {}
+        self.relpos_dt = {}
+
         relpos_group = QGroupBox('RelPosHeading Status', self)
         relpos_layout = QGridLayout()
         relpos_layout.addWidget(self.relpos_table)
@@ -157,10 +160,20 @@ The distance should match the actual distance between the antennas.
     def handle_RelPos(self, msg):
         '''display RelPos data in table'''
         nodeid = msg.transfer.source_node_id
+        tstamp = msg.transfer.ts_real
+        if nodeid not in self.relpos_last_time:
+            self.relpos_last_time[nodeid] = tstamp
+            self.relpos_dt[nodeid] = 0.2
+        dt = tstamp - self.relpos_last_time[nodeid]
+        self.relpos_dt[nodeid] = 0.9 * self.relpos_dt[nodeid] + 0.1 * dt
+        self.relpos_last_time[nodeid] = tstamp
+
+        rate_str = "%.1f" % (1.0 / self.relpos_dt[nodeid])
         self.relpos_table.update(nodeid, [nodeid,
                                           "%.1f" % msg.message.reported_heading_deg,
                                           "%.2f" % msg.message.relative_distance_m,
-                                          "%.2f" % msg.message.relative_down_pos_m])
+                                          "%.2f" % msg.message.relative_down_pos_m,
+                                          rate_str])
 
         
     def __del__(self):
