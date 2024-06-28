@@ -10,6 +10,7 @@ class RTCM3:
     def __init__(self, debug=False):
         self.crc_table = None
         self.debug = debug
+        self.discarded = []
         self.reset()
 
     def get_packet(self):
@@ -37,6 +38,8 @@ class RTCM3:
         crc2 = self.crc24(self.pkt[:-3])
         if crc1 != crc2:
             if self.debug:
+                # print all the bytes in the packet
+                print("{",", ".join(["%02x" % b for b in self.pkt]), "}")
                 print("crc fail len=%u" % len(self.pkt))
             # look for preamble
             idx = self.pkt[1:].find(bytearray([RTCMv3_PREAMBLE]))
@@ -67,8 +70,11 @@ class RTCM3:
         byte = ord(byte)
         if len(self.pkt) == 0 and byte != RTCMv3_PREAMBLE:
             # discard
+            self.discarded.append(byte)
             return False
-
+        if len(self.discarded) > 0:
+            print("{",", ".join(["%02x" % b for b in self.discarded]), "}")
+        self.discarded = []
         self.pkt.append(byte)
         if self.pkt_len == 0 and len(self.pkt) >= 3:
             self.pkt_len, = struct.unpack('>H', self.pkt[1:3])
