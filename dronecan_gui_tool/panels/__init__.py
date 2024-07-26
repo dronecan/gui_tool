@@ -16,6 +16,7 @@ from . import serial_panel
 from . import stats_panel
 from . import RemoteID_panel
 from . import hobbywing_esc
+from . import rc_panel
 
 class PanelDescriptor:
     def __init__(self, module):
@@ -43,5 +44,6 @@ PANELS = [
     PanelDescriptor(serial_panel),
     PanelDescriptor(stats_panel),
     PanelDescriptor(RemoteID_panel),
-    PanelDescriptor(hobbywing_esc)
+    PanelDescriptor(hobbywing_esc),
+    PanelDescriptor(rc_panel)
 ]
