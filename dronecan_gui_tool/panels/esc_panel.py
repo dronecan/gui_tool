@@ -94,7 +94,7 @@ class PercentSlider(QWidget):
 
 
 class ESCPanel(QDialog):
-    DEFAULT_INTERVAL = 0.1
+    DEFAULT_RATE = 10
 
     CMD_BIT_LENGTH = dronecan.get_dronecan_data_type(dronecan.uavcan.equipment.esc.RawCommand().cmd).value_type.bitlen
     CMD_MAX = 2 ** (CMD_BIT_LENGTH - 1) - 1
@@ -118,13 +118,13 @@ class ESCPanel(QDialog):
         self._safety_enable = QCheckBox(self)
         self._arming_enable = QCheckBox(self)
 
-        self._bcast_interval = QDoubleSpinBox(self)
-        self._bcast_interval.setMinimum(0.01)
-        self._bcast_interval.setMaximum(1.0)
-        self._bcast_interval.setSingleStep(0.1)
-        self._bcast_interval.setValue(self.DEFAULT_INTERVAL)
-        self._bcast_interval.valueChanged.connect(
-            lambda: self._bcast_timer.setInterval(int(self._bcast_interval.value() * 1e3)))
+        self._bcast_rate = QSpinBox(self)
+        self._bcast_rate.setMinimum(1)
+        self._bcast_rate.setMaximum(500)
+        self._bcast_rate.setSingleStep(1)
+        self._bcast_rate.setValue(self.DEFAULT_RATE)
+        self._bcast_rate.valueChanged.connect(
+            lambda: self._bcast_timer.setInterval(int(1e3 / self._bcast_rate.value())))
 
         self._stop_all = make_icon_button('hand-stop-o', 'Zero all channels', self, text='Stop All',
                                           on_clicked=self._do_stop_all)
@@ -139,7 +139,7 @@ class ESCPanel(QDialog):
         self._msg_viewer.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         self._bcast_timer = QTimer(self)
-        self._bcast_timer.start(int(self.DEFAULT_INTERVAL * 1e3))
+        self._bcast_timer.start(int(1e3 / self.DEFAULT_RATE))
         self._bcast_timer.timeout.connect(self._do_broadcast)
 
         layout = QVBoxLayout(self)
@@ -158,9 +158,9 @@ class ESCPanel(QDialog):
         controls_layout.addWidget(self._safety_enable)
         controls_layout.addWidget(QLabel('SendArming:', self))
         controls_layout.addWidget(self._arming_enable)
-        controls_layout.addWidget(QLabel('Broadcast interval:', self))
-        controls_layout.addWidget(self._bcast_interval)
-        controls_layout.addWidget(QLabel('sec', self))
+        controls_layout.addWidget(QLabel('Broadcast Rate:', self))
+        controls_layout.addWidget(self._bcast_rate)
+        controls_layout.addWidget(QLabel('Hz', self))
         controls_layout.addStretch()
         controls_layout.addWidget(self._pause)
         layout.addLayout(controls_layout)
