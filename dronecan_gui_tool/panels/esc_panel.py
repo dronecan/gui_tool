@@ -94,7 +94,7 @@ class ESCPanel(QDialog):
         self._bcast_interval.setSingleStep(0.1)
         self._bcast_interval.setValue(self.DEFAULT_INTERVAL)
         self._bcast_interval.valueChanged.connect(
-            lambda: self._bcast_timer.setInterval(self._bcast_interval.value() * 1e3))
+            lambda: self._bcast_timer.setInterval(int(self._bcast_interval.value() * 1e3)))
 
         self._stop_all = make_icon_button('hand-stop-o', 'Zero all channels', self, text='Stop All',
                                           on_clicked=self._do_stop_all)
