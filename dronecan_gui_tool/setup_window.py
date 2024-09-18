@@ -20,6 +20,7 @@ from PyQt5.QtGui import QIntValidator
 from logging import getLogger
 from collections import OrderedDict
 from itertools import count
+import re
 
 
 STANDARD_BAUD_RATES = 9600, 115200, 460800, 921600, 1000000, 3000000
@@ -101,7 +102,11 @@ def list_ifaces():
                 if 'tty' in port.systemLocation():
                     out[port.systemLocation()] = port.systemLocation()
             else:
-                out[port.description()] = port.systemLocation()
+                sys_name = port.systemLocation()
+                sys_alpha = re.sub(r'[^a-zA-Z0-9]', '', sys_name)
+                description = port.description()
+                # show the COM port in parentheses to make it clearer which port it is
+                out["%s (%s)" % (description, sys_alpha)] = sys_name
 
         mifaces = _mavcan_interfaces()
         mifaces += ["mcast:0", "mcast:1"]
