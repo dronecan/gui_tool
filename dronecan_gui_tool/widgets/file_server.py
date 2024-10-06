@@ -26,7 +26,10 @@ def FileServer_PathKey(path):
     return key used in file read request for a path. This is kept to 7 bytes
     to keep the read request in 2 frames
     '''
-    return base64.b64encode(struct.pack("<I",zlib.crc32(bytearray(path,'utf-8'))))[:7].decode('utf-8')
+    ret = base64.b64encode(struct.pack("<I",zlib.crc32(bytearray(path,'utf-8'))))[:7].decode('utf-8')
+    # avoid path separators
+    ret = ret.replace('/','_').replace('\\','_')
+    return ret
 
 class PathItem(QWidget):
     def __init__(self, parent, default=None):
