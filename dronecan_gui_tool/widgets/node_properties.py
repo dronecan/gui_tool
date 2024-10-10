@@ -18,6 +18,7 @@ from logging import getLogger
 from . import get_monospace_font, make_icon_button, BasicTable, show_error, request_confirmation
 from .node_monitor import node_health_to_color, node_mode_to_color
 from .file_server import FileServer_PathKey
+from ..am32_rtttl import AM32_Rtttl
 
 
 logger = getLogger(__name__)
@@ -339,7 +340,7 @@ def round_float(x):
     return round(x, 9)
 
 
-def render_union(u):
+def render_union(u, is_melody=False):
     value = get_union_value(u)
     if 'boolean' in dronecan.get_active_union_field(u):
         return bool(value)
@@ -347,6 +348,16 @@ def render_union(u):
         return value
     if isinstance(value, float):
         return round_float(value)
+    if isinstance(value, dronecan.transport.ArrayValue):
+        if is_melody:
+            melody_string = 'Valid!'
+            try:
+                melody_string = AM32_Rtttl.get_melody_string_from_dronecan_param_value(value)
+            except:
+                logger.error('Valid melody String')
+            return melody_string
+        else:
+            return value
     if 'uavcan.protocol.param.Empty' in str(value):
         return ''
     return value
@@ -362,6 +373,8 @@ class ConfigParamEditWindow(QDialog):
         self._target_node_id = target_node_id
         self._param_struct = param_struct
         self._update_callback = update_callback
+
+        self._is_tune_editor = AM32_Rtttl.is_am32_melody_param(param_struct)
 
         min_val = get_union_value(param_struct.min_value)
         if 'uavcan.protocol.param.Empty' in str(min_val):
@@ -392,6 +405,21 @@ class ConfigParamEditWindow(QDialog):
             self._value_widget = QCheckBox(self)
             self._value_widget.setChecked(bool(value))
 
+        if value_type == 'string_value':
+            if isinstance(value, dronecan.transport.ArrayValue):
+                self._value_widget = QPlainTextEdit(self)
+                self._value_widget.setFixedSize(500, 100)
+                if AM32_Rtttl.is_am32_melody_param(param_struct):
+                    melody_string = "Valid!"
+                    try:
+                        melody_string = AM32_Rtttl.get_melody_string_from_dronecan_param_value(value)
+                    except:
+                        logger.error('Valid melody String')
+                    self._value_widget.setPlainText(melody_string)
+                else:
+                    self._value_widget = QLineEdit(self)
+                    self._value_widget.setText(str(value))
+
         if self._value_widget is None:
             self._value_widget = QLineEdit(self)
             self._value_widget.setText(str(value))
@@ -411,12 +439,15 @@ class ConfigParamEditWindow(QDialog):
                 layout.addLayout(sub_layout, row, 1)
 
         add_const_field('Name', param_struct.name)
-        add_const_field('Type', dronecan.get_active_union_field(param_struct.value).replace('_value', ''))
-        add_const_field('Min/Max', min_val, max_val)
-        add_const_field('Default', render_union(param_struct.default_value))
-
-        layout.addWidget(QLabel('Value', self), layout.rowCount(), 0)
-        layout.addWidget(self._value_widget, layout.rowCount() - 1, 1)
+        if not self._is_tune_editor:
+            add_const_field('Type', dronecan.get_active_union_field(param_struct.value).replace('_value', ''))
+            add_const_field('Min/Max', min_val, max_val)
+            add_const_field('Default', render_union(param_struct.default_value))
+            layout.addWidget(QLabel('Value', self), layout.rowCount(), 0)
+            layout.addWidget(self._value_widget, layout.rowCount() - 1, 1)
+        else:
+            layout.addWidget(QLabel('Melody', self), layout.rowCount(), 0)
+            layout.addWidget(self._value_widget, layout.rowCount() - 1, 1)
 
         fetch_button = make_icon_button('refresh', 'Read parameter from the node', self, text='Fetch',
                                         on_clicked=self._do_fetch)
@@ -460,8 +491,16 @@ class ConfigParamEditWindow(QDialog):
             self._value_widget.setChecked(bool(value))
             self._update_callback(bool(value))
         else:
-            self._value_widget.setText(str(value))
-            self._update_callback(value)
+            if self._is_tune_editor:
+                melody_string = AM32_Rtttl.get_melody_string_from_dronecan_param_value(value)
+                str_value = melody_string
+            else:
+                str_value = str(value)
+            if type(self._value_widget) == QPlainTextEdit:
+                self._value_widget.setPlainText(str_value)
+            else:
+                self._value_widget.setText(str_value)
+            self._update_callback(value, self._is_tune_editor)
 
     def _on_response(self, e):
         if e is None:
@@ -500,7 +539,18 @@ class ConfigParamEditWindow(QDialog):
                 value = bool(self._value_widget.isChecked())
                 self._param_struct.value.boolean_value = value
             elif value_type == 'string_value':
-                value = self._value_widget.text()
+                if type(self._value_widget) == QPlainTextEdit:
+                    value = self._value_widget.toPlainText()
+                    if self._is_tune_editor:
+                        melody_string = value
+                        try:
+                            melody_eeprom_struct = AM32_Rtttl.to_am32_startup_melody(melody_string, 128)
+                            value = melody_eeprom_struct['data']
+                        except Exception as ex:
+                            show_error('Invalid Param', 'Detail:', ex, self)
+                            return
+                else:
+                    value = self._value_widget.text()
                 self._param_struct.value.string_value = value
             else:
                 raise RuntimeError('This is not happening!')
@@ -560,7 +610,7 @@ class ConfigParams(QGroupBox):
             BasicTable.Column('Type',
                               lambda m: dronecan.get_active_union_field(m[1].value).replace('_value', '')),
             BasicTable.Column('Value',
-                              lambda m: render_union(m[1].value),
+                              lambda m: render_union(m[1].value, AM32_Rtttl.is_am32_melody_param(m[1])),
                               resize_mode=QHeaderView.Stretch),
             BasicTable.Column('Default',
                               lambda m: render_union(m[1].default_value)),
@@ -595,8 +645,16 @@ class ConfigParams(QGroupBox):
             self._do_edit_param(list(unique_rows)[0])
 
     def _do_edit_param(self, index):
-        def update_callback(value):
-            self._table.item(index, self.VALUE_COLUMN).setText(str(value))
+        def update_callback(value, is_melody=False):
+            if is_melody:
+                melody_string = "Valid!"
+                try:
+                    melody_string = AM32_Rtttl.get_melody_string_from_dronecan_param_value(value)
+                except:
+                    print('Valid melody String')
+                self._table.item(index, self.VALUE_COLUMN).setText(melody_string)
+            else:
+                self._table.item(index, self.VALUE_COLUMN).setText(str(value))
 
         win = ConfigParamEditWindow(self, self._node, self._target_node_id, self._params[index], update_callback)
         win.show()
@@ -650,7 +708,7 @@ class ConfigParams(QGroupBox):
             self._table.setRowCount(0)
             self._params = []
 
-    def param_as_string(self, value):
+    def param_as_string(self, value, is_melody=False):
         value_type = dronecan.get_active_union_field(value)
 
         if value_type == 'integer_value':
@@ -660,7 +718,15 @@ class ConfigParams(QGroupBox):
         elif value_type == 'boolean_value':
             return 'True' if value.boolean_value else 'False'
         elif value_type == 'string_value':
-            return value.string_value
+            if is_melody:
+                melody_string = "Valid!"
+                try:
+                    melody_string = AM32_Rtttl.get_melody_string_from_dronecan_param_value(value.string_value)
+                except:
+                    print('Valid melody String')
+                return melody_string
+            else:
+                return value.string_value
         else:
             raise RuntimeError('invalid param value type')
             
@@ -676,7 +742,9 @@ class ConfigParams(QGroupBox):
         for p in self._params:
             value = p.value
             name = p.name
-            f.write("%s %s\n" % (name, self.param_as_string(value)))
+            value_string = self.param_as_string(value, AM32_Rtttl.is_am32_melody_param(p))
+            if value_string:
+                f.write("%s %s\n" % (name, value_string))
         f.close()
 
     def _on_send_response(self, e):
@@ -688,7 +756,7 @@ class ConfigParams(QGroupBox):
                 name = str(p.name)
                 if name == str(e.response.name):
                     logger.info('set %s to %s' % (name, self.param_as_string(e.response.value)))
-                    self._table.item(i, self.VALUE_COLUMN).setText(self.param_as_string(e.response.value))
+                    self._table.item(i, self.VALUE_COLUMN).setText(self.param_as_string(e.response.value, AM32_Rtttl.is_am32_melody_param(p)))
 
     def save_param(self, name, old_value, str_value):
         value_type = dronecan.get_active_union_field(old_value)
@@ -727,7 +795,14 @@ class ConfigParams(QGroupBox):
         for line in f.readlines():
             a = line.split()
             name = a[0]
-            value = a[1]
+            if AM32_Rtttl.is_am32_melody_param_from_file(name):
+                try:
+                    value = AM32_Rtttl.to_am32_startup_melody(a[1], 128)['data']
+                except Exception as ex:
+                    show_error('Invalid Param', 'Detail:', ex, self)
+                    return
+            else:
+                value = a[1]
             if name in pdict:
                 s = self.param_as_string(pdict[name])
                 if s != value:
