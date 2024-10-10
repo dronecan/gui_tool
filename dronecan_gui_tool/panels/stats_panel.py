@@ -9,7 +9,7 @@
 import dronecan
 from functools import partial
 from PyQt5.QtWidgets import QGridLayout, QWidget, QLabel, QDialog, \
-     QVBoxLayout, QGroupBox, QLineEdit
+     QVBoxLayout, QGroupBox, QLineEdit, QPushButton
 from PyQt5.QtCore import Qt, QTimer
 from ..widgets import get_icon
 from ..widgets import table_display
@@ -55,22 +55,75 @@ CAN Stats shows the statistics of the CAN interface.
 
         layout.addWidget(self.dronecan_stats_group)
         layout.addWidget(self.can_stats_group)
+
+        self.clear_stats_button = QPushButton('Clear Stats', self)
+        self.clear_stats_button.clicked.connect(self.clear_stats)
+        layout.addWidget(self.clear_stats_button)
+
         self.setLayout(layout)
         self.resize(800, 800)
         self.node = node
         self.handlers = [node.add_handler(dronecan.dronecan.protocol.Stats, self.on_dronecan_stats),
                          node.add_handler(dronecan.dronecan.protocol.CanStats, self.on_can_stats)]
+        
+        self.dronecan_offsets = {}
+        self.can_offsets = {}
 
     def on_dronecan_stats(self, msg):
         '''display dronecan stats'''
         nodeid = msg.transfer.source_node_id
-        self.dronecan_stats_table.update(nodeid, [nodeid, msg.message.tx_frames, msg.message.tx_errors, msg.message.rx_frames, msg.message.rx_error_oom, msg.message.rx_error_internal, msg.message.rx_error_missed_start, msg.message.rx_error_wrong_toggle, msg.message.rx_error_short_frame, msg.message.rx_error_bad_crc, msg.message.rx_ignored_wrong_address, msg.message.rx_ignored_not_wanted, msg.message.rx_ignored_unexpected_tid])
+        if nodeid not in self.dronecan_offsets:
+            self.dronecan_offsets[nodeid] = [0] * 12
+        offsets = self.dronecan_offsets[nodeid]
+        self.dronecan_stats_table.update(nodeid, [
+            nodeid,
+            msg.message.tx_frames - offsets[0],
+            msg.message.tx_errors - offsets[1],
+            msg.message.rx_frames - offsets[2],
+            msg.message.rx_error_oom - offsets[3],
+            msg.message.rx_error_internal - offsets[4],
+            msg.message.rx_error_missed_start - offsets[5],
+            msg.message.rx_error_wrong_toggle - offsets[6],
+            msg.message.rx_error_short_frame - offsets[7],
+            msg.message.rx_error_bad_crc - offsets[8],
+            msg.message.rx_ignored_wrong_address - offsets[9],
+            msg.message.rx_ignored_not_wanted - offsets[10],
+            msg.message.rx_ignored_unexpected_tid - offsets[11]
+        ])
 
     def on_can_stats(self, msg):
         '''display can stats'''
         nodeid = msg.transfer.source_node_id
-        self.can_stats_table.update((nodeid,msg.message.interface), [nodeid, msg.message.interface, msg.message.tx_requests, msg.message.tx_rejected, msg.message.tx_overflow, msg.message.tx_success, msg.message.tx_timedout, msg.message.tx_abort, msg.message.rx_received, msg.message.rx_overflow, msg.message.rx_errors, msg.message.busoff_errors])
+        interface = msg.message.interface
+        key = (nodeid, interface)
+        if key not in self.can_offsets:
+            self.can_offsets[key] = [0] * 11
+        offsets = self.can_offsets[key]
+        self.can_stats_table.update(key, [
+            nodeid,
+            interface,
+            msg.message.tx_requests - offsets[0],
+            msg.message.tx_rejected - offsets[1],
+            msg.message.tx_overflow - offsets[2],
+            msg.message.tx_success - offsets[3],
+            msg.message.tx_timedout - offsets[4],
+            msg.message.tx_abort - offsets[5],
+            msg.message.rx_received - offsets[6],
+            msg.message.rx_overflow - offsets[7],
+            msg.message.rx_errors - offsets[8],
+            msg.message.busoff_errors - offsets[9]
+        ])
 
+    def clear_stats(self):
+        '''clear all stats and set offsets'''
+        for nodeid in self.dronecan_stats_table.data.keys():
+            current_values = self.dronecan_stats_table.data[nodeid][1:]
+            self.dronecan_offsets[nodeid] = [offset + current for offset, current in zip(self.dronecan_offsets[nodeid], current_values)]
+
+        for key in self.can_stats_table.data.keys():
+            current_values = self.can_stats_table.data[key][2:]
+            self.can_offsets[key] = [offset + current for offset, current in zip(self.can_offsets[key], current_values)]
+        
     def __del__(self):
         for h in self.handlers:
             h.remove()
