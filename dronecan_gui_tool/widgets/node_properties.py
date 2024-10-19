@@ -246,7 +246,7 @@ class Controls(QGroupBox):
 
         # Requesting the firmware path
         fw_file = QFileDialog().getOpenFileName(self, 'Select firmware file', '',
-                                                'Binary images (*.bin);;ArduPilot Firmware (*.apj);;PX4 Firmware (*.px4);;All files (*.*)')
+                                                'Binary images (*.bin);;ArduPilot Firmware (*.apj);;AM32 Firmware (*.amj);;PX4 Firmware (*.px4);;All files (*.*)')
         if not fw_file[0]:
             self.window().show_message('Cancelled')
             return

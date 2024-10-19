@@ -95,6 +95,19 @@ class PathItem(QWidget):
     def reset_hit_counts(self):
         self._hit_count_label.setText('0')
 
+def hex2bin(heximage):
+    '''
+    Convert an Intel HEX format bytes array to binary format
+    '''
+    import intelhex
+    import io
+
+    hex_stream = io.StringIO(heximage.decode('utf-8'))
+    bin_stream = io.BytesIO()
+    intelhex.hex2bin(hex_stream, bin_stream)
+    bin_stream.seek(0)
+    return bin_stream.read()
+
 class FileServerJson(dronecan.app.file_server.FileServer):
     def __init__(self, node):
         super(FileServerJson, self).__init__(node)
@@ -115,7 +128,14 @@ class FileServerJson(dronecan.app.file_server.FileServer):
             if not 'image' in j:
                 print("Missing image in %s" % path)
                 return None
-            return bytearray(zlib.decompress(base64.b64decode(j['image'])))
+            return bytearray(zlib.decompress(base64.b64decode(j['image'].encode('utf-8'))))
+        if path.lower().endswith('.amj'):
+            # load JSON image as hex image
+            j = json.load(open(path,'r'))
+            if not 'hex' in j:
+                print("Missing hex image in %s" % path)
+                return None
+            return hex2bin(base64.b64decode(j['hex']))
         return open(path,'rb').read()
 
     def _check_path_change(self, path):

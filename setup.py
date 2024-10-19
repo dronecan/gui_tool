@@ -56,7 +56,8 @@ args = dict(
         'pygments',
         'qtpy',
         'pyqtgraph',
-        'qtwidgets'
+        'qtwidgets',
+        'intelhex'
     ],
     # We can't use "scripts" here, because generated shims don't work with multiprocessing pickler.
     entry_points={
