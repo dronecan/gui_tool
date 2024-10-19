@@ -168,7 +168,7 @@ class AM32_Rtttl:
     @staticmethod
     def get_melody_string_from_dronecan_param_value(value):
         if all(item == 255 for item in value):
-            return ''
+            return 'MelodyMelody:d=1,o=4,bpm=100:'
         melody_array = bytearray(128) 
         for i in range(len(value)):
             melody_array[i] = value[i]
