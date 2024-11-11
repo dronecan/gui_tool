@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, 
 from PyQt5.QtCore import QTimer, Qt
 from logging import getLogger
 from ..widgets import make_icon_button, get_icon, get_monospace_font
+import sip
 
 __all__ = 'PANEL_NAME', 'spawn', 'get_icon'
 
@@ -176,7 +177,8 @@ class ESCPanel(QDialog):
     def _on_esc_status(self, msg):
         if msg.message.esc_index < len(self._sliders):
             sl = self._sliders[msg.message.esc_index] 
-            sl.update_status(msg) 
+            if sl and not sip.isdeleted(sl):
+                sl.update_status(msg)
 
     def _do_broadcast(self):
         try:
