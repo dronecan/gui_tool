@@ -126,12 +126,10 @@ class DynamicNodeIDAllocatorWidget(QGroupBox):
             self._allocation_table.setRowCount(0)
         else:
             known_entries = [] if self._allocator is None else self._allocator.get_allocation_table()
-            displayed_entries = set()
+            nid_row = {} # map from node ID to its row as the DB can only have one entry per ID
 
             for row in range(self._allocation_table.rowCount()):
-                nid_str = self._allocation_table.item(row, 0).text()
-                uid_str = self._allocation_table.item(row, 1).text()
-                displayed_entries.add((uid_str, nid_str))
+                nid_row[int(self._allocation_table.item(row, 0).text())] = row
 
             def find_insertion_pos_for_node_id(target_nid):
                 for row in range(self._allocation_table.rowCount()):
@@ -141,11 +139,21 @@ class DynamicNodeIDAllocatorWidget(QGroupBox):
                 return self._allocation_table.rowCount()
 
             for uid, nid in known_entries:
-                if (unique_id_to_string(uid), str(nid)) in displayed_entries:
-                    continue
-                row = find_insertion_pos_for_node_id(nid)
-                self._allocation_table.insertRow(row)
-                self._allocation_table.set_row(row, (uid, nid))
+                # compute correct row for this entry
+                try:
+                    row = nid_row[nid]
+                except KeyError: # create row if it doesn't exist
+                    row = find_insertion_pos_for_node_id(nid)
+                    self._allocation_table.insertRow(row)
+                    # update later rows
+                    for known_nid, known_row in nid_row.items():
+                        if known_row >= row:
+                            nid_row[known_nid] = known_row + 1
+
+                # update row value if necessary
+                curr_val = self._allocation_table.item(row, 1)
+                if curr_val is None or curr_val.text() != unique_id_to_string(uid):
+                    self._allocation_table.set_row(row, (uid, nid))
 
         self._allocation_table.setUpdatesEnabled(True)
 
