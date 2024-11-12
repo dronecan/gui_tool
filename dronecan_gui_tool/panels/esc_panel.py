@@ -73,7 +73,7 @@ class PercentSlider(QWidget):
 
         self.setLayout(layout)
 
-        self.setMinimumHeight(300)
+        self.setMinimumHeight(475)
 
     def zero(self):
         self._slider.setValue(0)
