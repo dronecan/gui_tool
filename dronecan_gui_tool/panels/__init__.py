@@ -17,6 +17,7 @@ from . import stats_panel
 from . import RemoteID_panel
 from . import hobbywing_esc
 from . import rc_panel
+from . import manta50_esc
 
 class PanelDescriptor:
     def __init__(self, module):
@@ -45,5 +46,6 @@ PANELS = [
     PanelDescriptor(stats_panel),
     PanelDescriptor(RemoteID_panel),
     PanelDescriptor(hobbywing_esc),
-    PanelDescriptor(rc_panel)
+    PanelDescriptor(rc_panel),
+    PanelDescriptor(manta50_esc),
 ]
