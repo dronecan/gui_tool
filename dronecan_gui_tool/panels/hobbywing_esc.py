@@ -35,6 +35,7 @@ class HobbywingPanel(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)              # This is required to stop background timers!
 
         self._node = node
+        self.node_map = {}
 
         layout = QVBoxLayout()
 
@@ -103,6 +104,16 @@ class HobbywingPanel(QDialog):
         self.msg3rate_set.clicked.connect(self.on_msg3rate_set)
         
         layout.addLayout(self.labelWidget('Msg3Rate:', [self.msg3rate, self.msg3rate_set]))
+
+        self.throttle_source = QComboBox(self)
+        self.throttle_source.addItem("---")
+        self.throttle_source.addItem("PWM")
+        self.throttle_source.addItem("CAN")
+        self.throttle_source.setCurrentText("---")
+        self.throttle_source_set = QPushButton('Set', self)
+        self.throttle_source_set.clicked.connect(self.on_throttle_source_set)
+        
+        layout.addLayout(self.labelWidget('Throttle_source:', [self.throttle_source, self.throttle_source_set]))
         
         self.setLayout(layout)
         self.resize(400, 200)
@@ -120,6 +131,23 @@ class HobbywingPanel(QDialog):
             print('REPLY: ', dronecan.to_yaml(msg))
         else:
             print("No reply")
+
+    def handle_throttle_source_reply(self, msg):
+        '''handle a reply to a set of throttle source'''
+        if msg is not None:
+            print('REPLY: ', dronecan.to_yaml(msg))
+        else:
+            print("No reply")
+            
+    def handle_GetMajorConfig_reply(self, msg):
+        '''handle a reply to a GetMajorConfig'''
+        nodeid = msg.transfer.source_node_id
+        if msg.response.throttle_source == 0:
+            txt = "CAN"
+        else:
+            txt = "PWM"
+        if self.throttle_source.currentText() == "---":
+            self.throttle_source.setCurrentText(txt)
 
     def on_throttleid_set(self):
         '''set throttle ID'''
@@ -161,6 +189,16 @@ class HobbywingPanel(QDialog):
         req.direction = 0 if self.direction.currentText() == "CW" else 1
         self._node.request(req, nodeid, self.handle_reply)
 
+    def on_throttle_source_set(self):
+        '''set throttle source'''
+        nodeid = self.table.get_selected()
+        req = dronecan.com.hobbywing.esc.SetThrottleSource.Request()
+        txt = self.throttle_source.currentText()
+        if txt == "---":
+            return
+        req.source = 0 if txt == "CAN" else 1
+        self._node.request(req, nodeid, self.handle_throttle_source_reply)
+        
     def set_rate(self, nodeid, msgid, rate):
         '''set a message rate'''
         req = dronecan.com.hobbywing.esc.SetReportingFrequency.Request()
@@ -205,6 +243,7 @@ class HobbywingPanel(QDialog):
         data = self.table.get(nodeid)
         if data is None:
             data = [nodeid, 0, 0, 0, 0, 0, 0]
+        self.node_map[nodeid] = msg.message.payload[1]
         data[1] = msg.message.payload[1]
         self.table.update(nodeid, data)
 
@@ -235,6 +274,12 @@ class HobbywingPanel(QDialog):
         req = dronecan.com.hobbywing.esc.GetEscID()
         req.payload = [0]
         self._node.broadcast(req)
+        # for IDs we have, send GetMajorConfig
+        for nodeid in self.node_map.keys():
+            req = dronecan.com.hobbywing.esc.GetMajorConfig.Request()
+            req.option = 0
+            self._node.request(req, nodeid, self.handle_GetMajorConfig_reply)
+
         
     def labelWidget(self, label, widgets):
         '''a widget with a label'''
