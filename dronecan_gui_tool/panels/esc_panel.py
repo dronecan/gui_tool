@@ -14,6 +14,7 @@ from PyQt5.QtCore import QTimer, Qt
 from logging import getLogger
 from ..widgets import make_icon_button, get_icon, get_monospace_font
 import sip
+import time
 
 __all__ = 'PANEL_NAME', 'spawn', 'get_icon'
 
@@ -82,6 +83,16 @@ class PercentSlider(QWidget):
     def get_value(self):
         return self._slider.value()
     
+    def update_view_mode_ui(self, enable):
+        self._slider.setEnabled(not enable)
+        self._spinbox.setEnabled(not enable)
+        self._zero_button.setEnabled(not enable)
+
+    def view_mode_set_value(self, value):
+        if not self._slider.isEnabled() and not self._spinbox.isEnabled() and not self._zero_button.isEnabled():
+            self._slider.setValue(value)
+            self._spinbox.setValue(value)
+
     def update_status(self, msg):
         status = msg.message
         if status.esc_index == self._index:
@@ -107,6 +118,11 @@ class ESCPanel(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)              # This is required to stop background timers!
 
         self._node = node
+
+        self._view_mode = QCheckBox(self)
+        self._view_mode_label = QLabel('View Mode Inactive', self)
+        self._view_mode_external_source_label = QLabel('', self)
+        self._view_mode_external_detect_timestamp = 0
 
         self._sliders = [PercentSlider(index, self) for index in range(4)]
 
@@ -145,6 +161,13 @@ class ESCPanel(QDialog):
 
         layout = QVBoxLayout(self)
 
+        self._mode_layout = QHBoxLayout(self)
+        self._mode_layout.addWidget(self._view_mode)
+        self._mode_layout.addWidget(self._view_mode_label)
+        self._mode_layout.addWidget(self._view_mode_external_source_label)
+        self._mode_layout.setAlignment(Qt.AlignCenter)
+        layout.addLayout(self._mode_layout)
+
         self._slider_layout = QHBoxLayout(self)
         for sl in self._sliders:
             self._slider_layout.addWidget(sl)
@@ -173,6 +196,7 @@ class ESCPanel(QDialog):
         self.resize(self.minimumWidth(), self.minimumHeight())
 
         self._node.add_handler(dronecan.uavcan.equipment.esc.Status, self._on_esc_status)
+        self._node.add_handler(dronecan.uavcan.equipment.esc.RawCommand, self._on_esc_raw_command)
     
     def _on_esc_status(self, msg):
         if msg.message.esc_index < len(self._sliders):
@@ -180,27 +204,64 @@ class ESCPanel(QDialog):
             if sl and not sip.isdeleted(sl):
                 sl.update_status(msg)
 
+    def _on_esc_raw_command(self, msg):
+        if msg.transfer.source_node_id is not self._node.node_id:
+            self._view_mode_external_detect_timestamp = int(time.time() * 1000)
+            self._view_mode_external_source_label.setText(f'(External Source ID: {msg.transfer.source_node_id})')
+            self._view_mode.setEnabled(False)
+            self._view_mode.setChecked(True)
+            raw_command = msg.message
+            for i, sl in enumerate(self._sliders):
+                cmd_raw_value = raw_command.cmd[i]
+                if cmd_raw_value >= 0:
+                    sl.view_mode_set_value(int((cmd_raw_value / self.CMD_MAX) * 100))
+                else:
+                    sl.view_mode_set_value(int((cmd_raw_value / self.CMD_MIN) * -100))
+
+            self._msg_viewer.setPlainText(dronecan.to_yaml(msg))
+
+    def _update_view_mode(self):
+        if not self._view_mode.isEnabled() and int(time.time() * 1000) - self._view_mode_external_detect_timestamp > 2000:
+            self._view_mode.setEnabled(True) # release view mode checkbox after 2s timeout from external source
+
+        view_mode_enabled = self._view_mode.isChecked()
+        self._stop_all.setEnabled(not view_mode_enabled)
+        self._safety_enable.setEnabled(not view_mode_enabled)
+        self._pause.setEnabled(not view_mode_enabled)
+        self._arming_enable.setEnabled(not view_mode_enabled)
+        self._bcast_rate.setEnabled(not view_mode_enabled)
+        for sl in self._sliders:
+            sl.update_view_mode_ui(view_mode_enabled)
+
+        if view_mode_enabled:
+            self._view_mode_label.setText('View Mode Active')
+        else:
+            self._view_mode_label.setText('View Mode Inactive')
+            self._view_mode_external_source_label.setText('')
+
     def _do_broadcast(self):
         try:
-            if not self._pause.isChecked():
-                if self._safety_enable.checkState():
-                    msg = dronecan.ardupilot.indication.SafetyState()
-                    msg.status = msg.STATUS_SAFETY_OFF
-                    self._node.broadcast(msg)
-                if self._arming_enable.checkState():
-                    msg = dronecan.uavcan.equipment.safety.ArmingStatus()
-                    msg.status = msg.STATUS_FULLY_ARMED
-                    self._node.broadcast(msg)
-                msg = dronecan.uavcan.equipment.esc.RawCommand()
-                for sl in self._sliders:
-                    raw_value = sl.get_value() / 100
-                    value = (-self.CMD_MIN if raw_value < 0 else self.CMD_MAX) * raw_value
-                    msg.cmd.append(int(value))
+            self._update_view_mode()
+            if not self._view_mode.isChecked():
+                if not self._pause.isChecked():
+                    if self._safety_enable.checkState():
+                        msg = dronecan.ardupilot.indication.SafetyState()
+                        msg.status = msg.STATUS_SAFETY_OFF
+                        self._node.broadcast(msg)
+                    if self._arming_enable.checkState():
+                        msg = dronecan.uavcan.equipment.safety.ArmingStatus()
+                        msg.status = msg.STATUS_FULLY_ARMED
+                        self._node.broadcast(msg)
+                    msg = dronecan.uavcan.equipment.esc.RawCommand()
+                    for sl in self._sliders:
+                        raw_value = sl.get_value() / 100
+                        value = (-self.CMD_MIN if raw_value < 0 else self.CMD_MAX) * raw_value
+                        msg.cmd.append(int(value))
 
-                self._node.broadcast(msg)
-                self._msg_viewer.setPlainText(dronecan.to_yaml(msg))
-            else:
-                self._msg_viewer.setPlainText('Paused')
+                    self._node.broadcast(msg)
+                    self._msg_viewer.setPlainText(dronecan.to_yaml(msg))
+                else:
+                    self._msg_viewer.setPlainText('Paused')
         except Exception as ex:
             self._msg_viewer.setPlainText('Publishing failed:\n' + str(ex))
 
