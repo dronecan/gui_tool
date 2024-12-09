@@ -207,7 +207,7 @@ def run_setup_window(icon, dsdl_path=None):
 
     signing_key = PasswordEdit(win)
 
-    dir_selection = directory_selection.DirectorySelectionWidget(win, dsdl_path, directory_only=True)
+    dir_selection = directory_selection.DirectorySelectionWidget(win, 'Location of custom DSDL definitions [optional]', path=dsdl_path, directory_only=True)
 
     ok = QPushButton('OK', win)
 
