@@ -15,6 +15,7 @@ from logging import getLogger
 from ..widgets import make_icon_button, get_icon, get_monospace_font
 import sip
 import time
+import math
 
 __all__ = 'PANEL_NAME', 'spawn', 'get_icon'
 
@@ -91,16 +92,21 @@ class PercentSlider(QWidget):
             self._slider.setValue(value)
             self._spinbox.setValue(value)
 
-    def update_status(self, msg):
-        status = msg.message
-        if status.esc_index == self._index:
-            self._error_count_label.setText(f'Err: {status.error_count}')
-            self._voltage_label.setText(f'Volt: {status.voltage:.1f} V')
-            self._current_label.setText(f'Curr: {status.current:.1f} A')
-            temperature_celsius = status.temperature - 273.15
+    def update_status(self, idx, error_count, voltage, current, temperature_celsius, rpm, power_rating_pct):
+        if idx != self._index:
+            return
+        if error_count is not None:
+            self._error_count_label.setText(f'Err: {error_count}')
+        if voltage is not None:
+            self._voltage_label.setText(f'Volt: {voltage:.1f} V')
+        if current is not None:
+            self._current_label.setText(f'Curr: {current:.1f} A')
+        if temperature_celsius is not None:
             self._temperature_label.setText(f'Temp: {temperature_celsius:.1f} °C')
-            self._rpm_label.setText(f'RPM: {status.rpm}')
-            self._power_rating_pct_label.setText(f'RAT: {status.power_rating_pct} %')
+        if rpm is not None:
+            self._rpm_label.setText(f'RPM: {rpm}')
+        if power_rating_pct is not None:
+            self._power_rating_pct_label.setText(f'RAT: {power_rating_pct} %')
 
 
 class ESCPanel(QDialog):
@@ -116,6 +122,8 @@ class ESCPanel(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)              # This is required to stop background timers!
 
         self._node = node
+        self.send_hobbywing = False
+        self.hobbywing_map = {}
 
         self._view_mode = QCheckBox(self)
         self._view_mode_label = QLabel('View Mode Inactive', self)
@@ -193,14 +201,54 @@ class ESCPanel(QDialog):
         self.setLayout(layout)
         self.resize(self.minimumWidth(), self.minimumHeight())
 
-        self._node.add_handler(dronecan.uavcan.equipment.esc.Status, self._on_esc_status)
-        self._node.add_handler(dronecan.uavcan.equipment.esc.RawCommand, self._on_esc_raw_command)
-    
+        self.handlers = [self._node.add_handler(dronecan.uavcan.equipment.esc.Status, self._on_esc_status),
+                         self._node.add_handler(dronecan.com.hobbywing.esc.StatusMsg1, self.handle_StatusMsg1),
+                         self._node.add_handler(dronecan.com.hobbywing.esc.StatusMsg2, self.handle_StatusMsg2),
+                         self._node.add_handler(dronecan.com.hobbywing.esc.GetEscID, self.handle_GetEscID),
+                         self._node.add_handler(dronecan.uavcan.equipment.esc.RawCommand, self._on_esc_raw_command)]
+
     def _on_esc_status(self, msg):
         if msg.message.esc_index < len(self._sliders):
             sl = self._sliders[msg.message.esc_index] 
             if sl and not sip.isdeleted(sl):
-                sl.update_status(msg)
+                status = msg.message
+                temperature_celsius = status.temperature - 273.15
+                sl.update_status(status.esc_index, status.error_count, status.voltage, status.current,
+                                 temperature_celsius, status.rpm, status.power_rating_pct)
+
+    def handle_StatusMsg1(self, msg):
+        '''handle Hobbywing StatusMsg1'''
+        if not self.send_hobbywing:
+            print("Detected HobbyWing ESC")
+            self.send_hobbywing = True
+        nodeid = msg.transfer.source_node_id
+        escid = self.hobbywing_map.get(nodeid,None)
+        if escid is None:
+            return
+        sl = self._sliders[escid]
+        if sl and not sip.isdeleted(sl):
+            sl.update_status(escid, None, None, None,
+                             None, msg.message.rpm, None)
+
+    def handle_StatusMsg2(self, msg):
+        '''handle Hobbywing StatusMsg2'''
+        nodeid = msg.transfer.source_node_id
+        escid = self.hobbywing_map.get(nodeid,None)
+        if escid is None:
+            return
+        sl = self._sliders[escid]
+        if sl and not sip.isdeleted(sl):
+            sl.update_status(escid, None, msg.message.input_voltage*0.1, msg.message.current*0.1,
+                             msg.message.temperature, None, None)
+            
+    def handle_GetEscID(self, msg):
+        '''handle HobbyWing GetEscID'''
+        if len(msg.message.payload) != 2:
+            # likely from flight controller
+            return
+        nodeid = msg.transfer.source_node_id
+        escid = msg.message.payload[1]
+        self.hobbywing_map[nodeid] = escid-1
 
     def _on_esc_raw_command(self, msg):
         if msg.transfer.source_node_id is not self._node.node_id:
@@ -258,8 +306,18 @@ class ESCPanel(QDialog):
 
                     self._node.broadcast(msg)
                     self._msg_viewer.setPlainText(dronecan.to_yaml(msg))
+                    if self.send_hobbywing:
+                        # also handle HobbyWing ESCs
+                        msg = dronecan.com.hobbywing.esc.RawCommand()
+                        for sl in self._sliders:
+                            raw_value = sl.get_value() / 100
+                            value = (-self.CMD_MIN if raw_value < 0 else self.CMD_MAX) * raw_value
+                            msg.command.append(int(value))
+                        self._node.broadcast(msg)
                 else:
                     self._msg_viewer.setPlainText('Paused')
+            else:
+                self._msg_viewer.setPlainText('Paused')
         except Exception as ex:
             self._msg_viewer.setPlainText('Publishing failed:\n' + str(ex))
 
@@ -291,6 +349,8 @@ class ESCPanel(QDialog):
 
     def __del__(self):
         global _singleton
+        for h in self.handlers:
+            h.remove()
         _singleton = None
 
     def closeEvent(self, event):
