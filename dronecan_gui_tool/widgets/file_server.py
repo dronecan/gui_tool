@@ -136,6 +136,10 @@ class FileServerJson(dronecan.app.file_server.FileServer):
                 print("Missing hex image in %s" % path)
                 return None
             return hex2bin(base64.b64decode(j['hex']))
+        if path.lower().endswith('.hex'):
+            # intel hex image
+            h = open(path,'rb').read()
+            return hex2bin(h)
         return open(path,'rb').read()
 
     def _check_path_change(self, path):
