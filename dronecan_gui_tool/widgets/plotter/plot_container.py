@@ -31,7 +31,7 @@ class PlotContainerWidget(QDockWidget):
         self._active_data_types = active_data_types
         self._extractors = []
 
-        self._new_extractor_button = make_icon_button('plus', 'Add new value extractor', self,
+        self._new_extractor_button = make_icon_button('fa6s.plus', 'Add new value extractor', self,
                                                       on_clicked=self._do_new_extractor)
 
         self._how_to_label = QLabel('\u27F5 Click to configure plotting', self)

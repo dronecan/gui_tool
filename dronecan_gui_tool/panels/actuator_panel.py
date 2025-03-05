@@ -45,7 +45,7 @@ class PercentSlider(QWidget):
         self._spinbox.setSingleStep(0.001)
         self._spinbox.valueChanged.connect(lambda: self._slider.setValue(self._spinbox.value()*1000.0))
 
-        self._zero_button = make_icon_button('hand-stop-o', 'Zero setpoint', self, text = 'Zero', on_clicked=self.zero)
+        self._zero_button = make_icon_button('fa6.hand', 'Zero setpoint', self, text = 'Zero', on_clicked=self.zero)
 
         self._actuator_id = QSpinBox(self)
         self._actuator_id.setMinimum(0)
@@ -109,10 +109,10 @@ class ActuatorPanel(QDialog):
         self._bcast_interval.valueChanged.connect(
             lambda: self._bcast_timer.setInterval(self._bcast_interval.value() * 1e3))
 
-        self._stop_all = make_icon_button('hand-stop-o', 'Zero all channels', self, text='Zero All',
+        self._stop_all = make_icon_button('fa6.hand', 'Zero all channels', self, text='Zero All',
                                           on_clicked=self._do_stop_all)
 
-        self._pause = make_icon_button('pause', 'Pause publishing', self, checkable=True, text='Pause')
+        self._pause = make_icon_button('fa6s.pause', 'Pause publishing', self, checkable=True, text='Pause')
 
         self._msg_viewer = QPlainTextEdit(self)
         self._msg_viewer.setReadOnly(True)
@@ -219,4 +219,4 @@ def spawn(parent, node):
     return _singleton
 
 
-get_icon = partial(get_icon, 'asterisk')
+get_icon = partial(get_icon, 'fa6s.asterisk')

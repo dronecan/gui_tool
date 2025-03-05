@@ -44,14 +44,14 @@ class PlotterWindow(QMainWindow):
         #
         control_menu = self.menuBar().addMenu('&Control')
 
-        self._stop_action = QAction(get_icon('stop'), '&Stop Updates', self)
+        self._stop_action = QAction(get_icon('fa6s.stop'), '&Stop Updates', self)
         self._stop_action.setStatusTip('While stopped, all new data will be discarded')
         self._stop_action.setShortcut(QKeySequence('Ctrl+Shift+S'))
         self._stop_action.setCheckable(True)
         self._stop_action.toggled.connect(self._on_stop_toggled)
         control_menu.addAction(self._stop_action)
 
-        self._pause_action = QAction(get_icon('pause'), '&Pause Updates', self)
+        self._pause_action = QAction(get_icon('fa6s.pause'), '&Pause Updates', self)
         self._pause_action.setStatusTip('While paused, new data will be accumulated in memory '
                                         'to be processed once un-paused')
         self._pause_action.setShortcut(QKeySequence('Ctrl+Shift+P'))
@@ -61,7 +61,7 @@ class PlotterWindow(QMainWindow):
 
         control_menu.addSeparator()
 
-        self._reset_time_action = QAction(get_icon('history'), '&Reset', self)
+        self._reset_time_action = QAction(get_icon('fa6s.clock-rotate-left'), '&Reset', self)
         self._reset_time_action.setStatusTip('Base time will be reset; all plots will be reset')
         self._reset_time_action.setShortcut(QKeySequence('Ctrl+Shift+R'))
         self._reset_time_action.triggered.connect(self._do_reset)

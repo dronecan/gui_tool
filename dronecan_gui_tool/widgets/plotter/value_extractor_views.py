@@ -119,7 +119,7 @@ class NewValueExtractorWindow(QDialog):
         self._type_selector.setFocus(Qt.OtherFocusReason)
         self._type_selector.currentTextChanged.connect(self._on_type_changed)
 
-        self._show_all_types_button = make_icon_button('puzzle-piece',
+        self._show_all_types_button = make_icon_button('fa6s.puzzle-piece',
                                                        'Show all known message types, not only those that are '
                                                        'currently being exchanged over the bus',
                                                        self, checkable=True, on_clicked=self._update_data_type_list)
@@ -147,13 +147,13 @@ class NewValueExtractorWindow(QDialog):
 
         # Visualization options
         self._selected_color = self.default_color_rotator.get()
-        self._select_color_button = make_icon_button('paint-brush', 'Select line color', self,
+        self._select_color_button = make_icon_button('fa6s.paintbrush', 'Select line color', self,
                                                      on_clicked=self._select_color)
         self._select_color_button.setFlat(True)
         _set_color(self._select_color_button, QPalette.Button, self._selected_color)
 
         # Buttons
-        self._ok_button = make_icon_button('check', 'Create new extractor with these settings', self,
+        self._ok_button = make_icon_button('fa6s.check', 'Create new extractor with these settings', self,
                                            text='OK', on_clicked=self._on_ok)
 
         # Layout
@@ -302,9 +302,9 @@ class ExtractorWidget(QWidget):
         self._update_timer.timeout.connect(self._update)
         self._update_timer.start(200)
 
-        self._delete_button = make_icon_button('trash-o', 'Remove this extractor', self, on_clicked=self._do_remove)
+        self._delete_button = make_icon_button('fa6.trash', 'Remove this extractor', self, on_clicked=self._do_remove)
 
-        self._color_button = make_icon_button('paint-brush', 'Change plot color', self, on_clicked=self._change_color)
+        self._color_button = make_icon_button('fa6s.paintbrush', 'Change plot color', self, on_clicked=self._change_color)
         self._color_button.setFlat(True)
         _set_color(self._color_button, QPalette.Button, model.color)
 
@@ -316,7 +316,7 @@ class ExtractorWidget(QWidget):
         self._extraction_expression_box.setCompleter(
             _make_expression_completer(self._extraction_expression_box, model.data_type_name))
 
-        self._error_label = make_icon_button('warning', 'Extraction error count; click to reset', self,
+        self._error_label = make_icon_button('fa6s.triangle-exclamation', 'Extraction error count; click to reset', self,
                                              on_clicked=self._reset_errors)
         self._reset_errors()
 

@@ -59,7 +59,7 @@ class StateWidget(QWidget):
 
         self._table = StateTable(self)
 
-        self._reload_button = make_icon_button('refresh', 'Reload state information from the adapter', self,
+        self._reload_button = make_icon_button('fa6s.arrows-rotate', 'Reload state information from the adapter', self,
                                                on_clicked=self._do_reload, text='Reload')
 
         self._auto_reload_checkbox = QCheckBox('Auto reload every [sec]:', self)
@@ -223,10 +223,10 @@ class ConfigParamEditWindow(QDialog):
         else:
             raise ValueError('Unsupported value type %r' % model.type)
 
-        self._ok_button = make_icon_button('check', 'Send changes to the device', self,
+        self._ok_button = make_icon_button('fa6s.check', 'Send changes to the device', self,
                                            text='OK', on_clicked=self._do_ok)
 
-        self._cancel_button = make_icon_button('remove', 'Discard changes and close this window', self,
+        self._cancel_button = make_icon_button('fa6s.xmark', 'Discard changes and close this window', self,
                                                text='Cancel', on_clicked=self.close)
 
         layout = QVBoxLayout(self)
@@ -281,15 +281,15 @@ class ConfigWidget(QWidget):
 
         self._have_unsaved_changes = False
 
-        self._fetch_button = make_icon_button('refresh',
+        self._fetch_button = make_icon_button('fa6s.arrows-roatate',
                                               'Fetch configuration from the adapter',
                                               self, on_clicked=self._do_fetch, text='Fetch')
 
-        self._store_button = make_icon_button('database',
+        self._store_button = make_icon_button('fa6s.database',
                                               'Store the current configuration into non-volatile memory on the adapter',
                                               self, on_clicked=self._do_store, text='Store')
 
-        self._erase_button = make_icon_button('eraser',
+        self._erase_button = make_icon_button('fa6s.eraser',
                                               'Erase configuration from the non-volatile memory',
                                               self, on_clicked=self._do_erase, text='Erase')
 
@@ -389,7 +389,7 @@ class CLIWidget(QWidget):
 
         self._command_line.setCompleter(self._command_line_completer)
 
-        self._execute_button = make_icon_button('flash', 'Execute command', self, on_clicked=self._do_execute)
+        self._execute_button = make_icon_button('fa6s.bolt', 'Execute command', self, on_clicked=self._do_execute)
 
         self._response_box = QPlainTextEdit(self)
         self._response_box.setToolTip('Command output will be printed here')
@@ -448,9 +448,9 @@ class ControlPanelWindow(QDialog):
         self._cli_widget = CLIWidget(self, self._cli_iface)
 
         self._tab_widget = QTabWidget(self)
-        self._tab_widget.addTab(self._state_widget, get_icon('dashboard'), 'Adapter State')
-        self._tab_widget.addTab(self._config_widget, get_icon('wrench'), 'Configuration')
-        self._tab_widget.addTab(self._cli_widget, get_icon('terminal'), 'Command Line')
+        self._tab_widget.addTab(self._state_widget, get_icon('fa6s.gauge-high'), 'Adapter State')
+        self._tab_widget.addTab(self._config_widget, get_icon('fa6s.wrench'), 'Configuration')
+        self._tab_widget.addTab(self._cli_widget, get_icon('fa6s.terminal'), 'Command Line')
 
         self._status_bar = QStatusBar(self)
         self._status_bar.setSizeGripEnabled(False)

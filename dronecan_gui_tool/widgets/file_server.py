@@ -38,7 +38,7 @@ class PathItem(QWidget):
         self.on_remove = lambda _: None
         self.on_path_changed = lambda *_: None
 
-        self._remove_button = make_icon_button('remove', 'Remove this path', self,
+        self._remove_button = make_icon_button('fa6s.xmark', 'Remove this path', self,
                                                on_clicked=lambda: self.on_remove(self))
 
         completer = QCompleter(self)
@@ -52,13 +52,13 @@ class PathItem(QWidget):
         self._path_bar.setToolTip('Lookup path for file services; should point either to a file or to a directory')
         self._path_bar.currentTextChanged.connect(self._on_path_changed)
 
-        self._select_file_button = make_icon_button('file-o', 'Specify file path', self,
+        self._select_file_button = make_icon_button('fa6.file', 'Specify file path', self,
                                                     on_clicked=self._on_select_path_file)
 
-        self._select_dir_button = make_icon_button('folder-open-o', 'Specify directory path', self,
+        self._select_dir_button = make_icon_button('fa6.folder-open', 'Specify directory path', self,
                                                    on_clicked=self._on_select_path_directory)
 
-        self._hit_count_label = LabelWithIcon(get_icon('upload'), '0', self)
+        self._hit_count_label = LabelWithIcon(get_icon('fa6s.upload'), '0', self)
         self._hit_count_label.setToolTip('Hit count')
 
         layout = QHBoxLayout(self)
@@ -181,7 +181,7 @@ class FileServerWidget(QGroupBox):
 
         self._path_widgets = []
 
-        self._start_button = make_icon_button('rocket', 'Launch/stop the file server', self,
+        self._start_button = make_icon_button('fa6s.rocket', 'Launch/stop the file server', self,
                                               checkable=True,
                                               on_clicked=self._on_start_stop)
         self._start_button.setEnabled(False)
@@ -192,7 +192,7 @@ class FileServerWidget(QGroupBox):
         self._tmr.start(500)
 
         self._add_path_button = \
-            make_icon_button('plus', 'Add lookup path (lookup paths can be modified while the server is running)',
+            make_icon_button('fa6s.plus', 'Add lookup path (lookup paths can be modified while the server is running)',
                              self, on_clicked=self._on_add_path)
 
         layout = QVBoxLayout(self)
