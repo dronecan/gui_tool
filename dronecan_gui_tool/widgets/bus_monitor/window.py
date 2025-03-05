@@ -279,7 +279,7 @@ class BusMonitorWindow(QMainWindow):
             if col == 0:
                 item = self._log_widget.table.item(row, col)
                 if item.icon().isNull():
-                    item.setIcon(get_icon('circle'))
+                    item.setIcon(get_icon('fa6s.circle'))
                     flash(self, 'Row %d was marked, click again to unmark', row, duration=3)
                 else:
                     item.setIcon(QIcon())
@@ -421,7 +421,7 @@ class BusMonitorWindow(QMainWindow):
 
         row_index = self._log_widget.table.rowAt(pos.y())
         if row_index >= 0:
-            action_show_definition = QAction(get_icon('file-code-o'), 'Open data type &definition', self)
+            action_show_definition = QAction(get_icon('fa6.file-code'), 'Open data type &definition', self)
             action_show_definition.triggered.connect(lambda: self._show_data_type_definition(row_index))
             menu.addAction(action_show_definition)
             menu.popup(self._log_widget.table.mapToGlobal(pos))

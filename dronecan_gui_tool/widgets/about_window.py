@@ -104,7 +104,7 @@ class AboutWindow(QDialog):
         #
         # Window layout
         #
-        self._exit_button = QPushButton(get_icon('check'), 'OK', self)
+        self._exit_button = QPushButton(get_icon('fa6s.check'), 'OK', self)
         self._exit_button.clicked.connect(self.close)
 
         layout = QVBoxLayout(self)

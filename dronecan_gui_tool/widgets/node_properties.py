@@ -175,15 +175,15 @@ class Controls(QGroupBox):
         self._file_server_widget = file_server_widget
         self._dynamic_node_id_allocator_widget = dynamic_node_id_allocator_widget
 
-        self._restart_button = make_icon_button('power-off', 'Restart the node [dronecan.uavcan.protocol.RestartNode]', self,
+        self._restart_button = make_icon_button('fa6s.power-off', 'Restart the node [dronecan.uavcan.protocol.RestartNode]', self,
                                                 text='Restart', on_clicked=self._do_restart)
 
-        self._transport_stats_button = make_icon_button('truck',
+        self._transport_stats_button = make_icon_button('fa6s.truck',
                                                         'Request transport stats [dronecan.uavcan.protocol.GetTransportStats]',
                                                         self, text='Get Transport Stats',
                                                         on_clicked=self._do_get_transport_stats)
 
-        self._update_button = make_icon_button('bug',
+        self._update_button = make_icon_button('fa6s.bug',
                                                'Request firmware update [dronecan.uavcan.protocol.file.BeginFirmwareUpdate]',
                                                self, text='Update Firmware', on_clicked=self._do_firmware_update)
 
@@ -449,13 +449,13 @@ class ConfigParamEditWindow(QDialog):
             layout.addWidget(QLabel('Melody', self), layout.rowCount(), 0)
             layout.addWidget(self._value_widget, layout.rowCount() - 1, 1)
 
-        fetch_button = make_icon_button('refresh', 'Read parameter from the node', self, text='Fetch',
+        fetch_button = make_icon_button('fa6s.arrows-rotate', 'Read parameter from the node', self, text='Fetch',
                                         on_clicked=self._do_fetch)
-        set_default_button = make_icon_button('fire-extinguisher', 'Restore default value', self, text='Restore',
+        set_default_button = make_icon_button('fa6s.fire-extinguisher', 'Restore default value', self, text='Restore',
                                               on_clicked=self._restore_default)
-        send_button = make_icon_button('flash', 'Send parameter to the node', self, text='Send',
+        send_button = make_icon_button('fa6s.bolt', 'Send parameter to the node', self, text='Send',
                                        on_clicked=self._do_send)
-        cancel_button = make_icon_button('remove', 'Close this window; unsent changes will be lost', self,
+        cancel_button = make_icon_button('fa6s.xmark', 'Close this window; unsent changes will be lost', self,
                                          text='Cancel', on_clicked=self.close)
 
         controls_layout = QGridLayout(self)
@@ -580,17 +580,17 @@ class ConfigParams(QGroupBox):
         self._target_node_id = target_node_id
         self._retries = 0
 
-        self._read_all_button = make_icon_button('refresh', 'Fetch all config parameters from the node', self,
+        self._read_all_button = make_icon_button('fa6s.arrows-rotate', 'Fetch all config parameters from the node', self,
                                                  text='Fetch All', on_clicked=self._do_reload)
 
         opcodes = dronecan.uavcan.protocol.param.ExecuteOpcode.Request()
 
         self._save_button = \
-            make_icon_button('database', 'Commit configuration to the non-volatile storage [OPCODE_SAVE]', self,
+            make_icon_button('fa6s.database', 'Commit configuration to the non-volatile storage [OPCODE_SAVE]', self,
                              text='Store All', on_clicked=partial(self._do_execute_opcode, opcodes.OPCODE_SAVE))
 
         self._erase_button = \
-            make_icon_button('eraser', 'Clear the non-volatile configuration storage [OPCODE_ERASE]', self,
+            make_icon_button('fa6s.eraser', 'Clear the non-volatile configuration storage [OPCODE_ERASE]', self,
                              text='Erase All', on_clicked=partial(self._do_execute_opcode, opcodes.OPCODE_ERASE))
 
         self._save_to_file = make_icon_button('',

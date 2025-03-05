@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
         #
         # File menu
         #
-        quit_action = QAction(get_icon('sign-out'), '&Quit', self)
+        quit_action = QAction(get_icon('fa6s.right-from-bracket'), '&Quit', self)
         quit_action.setShortcut(QKeySequence('Ctrl+Shift+Q'))
         quit_action.triggered.connect(self.close)
 
@@ -148,28 +148,28 @@ class MainWindow(QMainWindow):
         #
         # Tools menu
         #
-        show_bus_monitor_action = QAction(get_icon('bus'), '&Bus Monitor', self)
+        show_bus_monitor_action = QAction(get_icon('fa6s.bus'), '&Bus Monitor', self)
         show_bus_monitor_action.setShortcut(QKeySequence('Ctrl+Shift+B'))
         show_bus_monitor_action.setStatusTip('Open bus monitor window')
         show_bus_monitor_action.triggered.connect(self._bus_monitor_manager.spawn_monitor)
 
-        show_console_action = QAction(get_icon('terminal'), 'Interactive &Console', self)
+        show_console_action = QAction(get_icon('fa6s.terminal'), 'Interactive &Console', self)
         show_console_action.setShortcut(QKeySequence('Ctrl+Shift+T'))
         show_console_action.setStatusTip('Open interactive console window')
         show_console_action.triggered.connect(self._show_console_window)
 
-        new_subscriber_action = QAction(get_icon('newspaper-o'), '&Subscriber', self)
+        new_subscriber_action = QAction(get_icon('fa6.newspaper'), '&Subscriber', self)
         new_subscriber_action.setShortcut(QKeySequence('Ctrl+Shift+S'))
         new_subscriber_action.setStatusTip('Open subscription tool')
         new_subscriber_action.triggered.connect(
             lambda: SubscriberWindow.spawn(self, self._node, self._active_data_type_detector))
 
-        new_plotter_action = QAction(get_icon('area-chart'), '&Plotter', self)
+        new_plotter_action = QAction(get_icon('fa6s.chart-area'), '&Plotter', self)
         new_plotter_action.setShortcut(QKeySequence('Ctrl+Shift+P'))
         new_plotter_action.setStatusTip('Open new graph plotter window')
         new_plotter_action.triggered.connect(self._plotter_manager.spawn_plotter)
 
-        show_can_adapter_controls_action = QAction(get_icon('plug'), 'CAN &Adapter Control Panel', self)
+        show_can_adapter_controls_action = QAction(get_icon('fa6s.plug'), 'CAN &Adapter Control Panel', self)
         show_can_adapter_controls_action.setShortcut(QKeySequence('Ctrl+Shift+A'))
         show_can_adapter_controls_action.setStatusTip('Open CAN adapter control panel (if supported by the adapter)')
         show_can_adapter_controls_action.triggered.connect(self._try_spawn_can_adapter_control_panel)
@@ -199,14 +199,14 @@ class MainWindow(QMainWindow):
         #
         # Help menu
         #
-        dronecan_website_action = QAction(get_icon('globe'), 'Open DroneCAN &Website', self)
+        dronecan_website_action = QAction(get_icon('fa6s.globe'), 'Open DroneCAN &Website', self)
         dronecan_website_action.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('http://dronecan.org')))
 
-        show_log_directory_action = QAction(get_icon('pencil-square-o'), 'Open &Log Directory', self)
+        show_log_directory_action = QAction(get_icon('fa6.pen-to-square'), 'Open &Log Directory', self)
         show_log_directory_action.triggered.connect(
             lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(log_file.name))))
 
-        about_action = QAction(get_icon('info'), '&About', self)
+        about_action = QAction(get_icon('fa6s.info'), '&About', self)
         about_action.triggered.connect(lambda: AboutWindow(self).show())
 
         help_menu = self.menuBar().addMenu('&Help')

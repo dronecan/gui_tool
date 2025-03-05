@@ -58,11 +58,11 @@ class PlotAreaYTWidget(QWidget, AbstractPlotArea):
         self._extractor_associations = {}       # Extractor : plots
         self._max_x = 0
 
-        self._autoscroll_checkbox = make_icon_button('angle-double-right',
+        self._autoscroll_checkbox = make_icon_button('fa6s.angles-right',
                                                      'Scroll the plot automatically as new data arrives', self,
                                                      checkable=True, checked=True)
 
-        self._clear_button = make_icon_button('eraser', 'Clear all curves', self, on_clicked=self._do_clear)
+        self._clear_button = make_icon_button('fa6s.eraser', 'Clear all curves', self, on_clicked=self._do_clear)
 
         self._plot = PlotWidget(self, background=QColor(Qt.black))
         self._plot.showButtons()

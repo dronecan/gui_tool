@@ -47,7 +47,7 @@ class DynamicNodeIDAllocatorWidget(QGroupBox):
         self._allocation_table_update_timer.start(500)
         self._allocation_table_update_timer.timeout.connect(self._update_table)
 
-        self._start_stop_button = make_icon_button('rocket', 'Launch/stop the dynamic node ID allocation server', self,
+        self._start_stop_button = make_icon_button('fa6s.rocket', 'Launch/stop the dynamic node ID allocation server', self,
                                                    checkable=True)
         self._start_stop_button.clicked.connect(self._on_start_stop_button)
 
@@ -58,7 +58,7 @@ class DynamicNodeIDAllocatorWidget(QGroupBox):
         self._database_file.addItem(self._database_file.currentText())
         self._database_file.on_commit = self._on_start_stop_button
 
-        self._select_database_file = make_icon_button('folder-open-o', 'Open allocation table file', self,
+        self._select_database_file = make_icon_button('fa6.folder-open', 'Open allocation table file', self,
                                                       on_clicked=self._on_select_database_file)
 
         db_file_completer = QCompleter()

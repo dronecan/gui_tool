@@ -68,7 +68,7 @@ class PlotAreaXYWidget(QWidget, AbstractPlotArea):
 
         self._extractor_associations = {}       # Extractor : plot
 
-        self._clear_button = make_icon_button('eraser', 'Clear all plots', self, on_clicked=self.reset)
+        self._clear_button = make_icon_button('fa6s.eraser', 'Clear all plots', self, on_clicked=self.reset)
 
         self._max_data_points = 100000
 

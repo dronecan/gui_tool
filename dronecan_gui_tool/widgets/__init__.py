@@ -279,22 +279,22 @@ class SearchBar(QWidget):
         self._default_search_direction = 'down'
 
         self.show_search_bar_button = \
-            make_icon_button('search', 'Show search bar', self, checkable=True,
+            make_icon_button('fa6s.magnifying-glass', 'Show search bar', self, checkable=True,
                              on_clicked=lambda: self.setVisible(self.show_search_bar_button.isChecked()))
 
         self._bar = SearchBarComboBox(self)
         self._bar.on_commit = lambda: self._do_search(self._default_search_direction)
 
-        self._use_regex = make_icon_button('code', 'Search using regular expressions', self,
+        self._use_regex = make_icon_button('fa6s.code', 'Search using regular expressions', self,
                                            checkable=True)
 
-        self._case_sensitive = make_icon_button('text-height', 'Search query is case sensitive', self,
+        self._case_sensitive = make_icon_button('fa6s.text-height', 'Search query is case sensitive', self,
                                                 checkable=True)
 
-        self._button_search_down = make_icon_button('caret-down', 'Search down', self,
+        self._button_search_down = make_icon_button('fa6s.caret-down', 'Search down', self,
                                                     on_clicked=partial(self._do_search, 'down'))
 
-        self._button_search_up = make_icon_button('caret-up', 'Search up', self,
+        self._button_search_up = make_icon_button('fa6s.caret-up', 'Search up', self,
                                                   on_clicked=partial(self._do_search, 'up'))
 
         self.on_search = lambda *_: None
@@ -348,23 +348,23 @@ class FilterBar(QWidget):
             self.on_commit = lambda: None
             self.on_remove = lambda _: None
 
-            self._remove_button = make_icon_button('remove', 'Remove this filter', self,
+            self._remove_button = make_icon_button('fa6s.filter-circle-xmark', 'Remove this filter', self,
                                                    on_clicked=lambda: self.on_remove(self))
 
             self._bar = SearchBarComboBox(self, pattern_completion_model)
             self._bar.on_commit = self._on_commit
             self._bar.setFocus(Qt.OtherFocusReason)
 
-            self._apply_button = make_icon_button('check', 'Apply this filter expression [Enter]', self,
+            self._apply_button = make_icon_button('fa6s.check', 'Apply this filter expression [Enter]', self,
                                                   on_clicked=self._on_commit)
 
-            self._inverse_button = make_icon_button('random', 'Negate filter', self, checkable=True,
+            self._inverse_button = make_icon_button('fa6s.shuffle', 'Negate filter', self, checkable=True,
                                                     on_clicked=self._on_commit)
 
-            self._regex_button = make_icon_button('code', 'Use regular expressions', self, checkable=True,
+            self._regex_button = make_icon_button('fa6s.code', 'Use regular expressions', self, checkable=True,
                                                   checked=True, on_clicked=self._on_commit)
 
-            self._case_sensitive_button = make_icon_button('text-height', 'Filter expression is case sensitive', self,
+            self._case_sensitive_button = make_icon_button('fa6s.text-height', 'Filter expression is case sensitive', self,
                                                            checkable=True, on_clicked=self._on_commit)
 
             layout = QHBoxLayout(self)
@@ -396,7 +396,7 @@ class FilterBar(QWidget):
     def __init__(self, parent):
         super(FilterBar, self).__init__(parent)
 
-        self.add_filter_button = make_icon_button('filter', 'Add filter', self, on_clicked=self._on_add_filter)
+        self.add_filter_button = make_icon_button('fa6s.filter', 'Add filter', self, on_clicked=self._on_add_filter)
 
         self.on_filter = lambda *_: None
 
@@ -465,12 +465,12 @@ class RealtimeLogWidget(QWidget):
         self._table = BasicTable(self, **table_options)
         self._table.selectionModel().selectionChanged.connect(self._call_on_selection_changed)
 
-        self._clear_button = make_icon_button('trash-o', 'Clear', self, on_clicked=self._clear)
+        self._clear_button = make_icon_button('fa6s.trash', 'Clear', self, on_clicked=self._clear)
 
-        self._pause = make_icon_button('pause', 'Pause updates; data received while paused will not be lost', self,
+        self._pause = make_icon_button('fa6s.pause', 'Pause updates; data received while paused will not be lost', self,
                                        checkable=True)
 
-        self._start_button = make_icon_button('video-camera', 'Start/stop capturing', self,
+        self._start_button = make_icon_button('fa6s.video', 'Start/stop capturing', self,
                                               checkable=True,
                                               checked=started_by_default,
                                               on_clicked=self._on_start_button_clicked)
@@ -481,7 +481,7 @@ class RealtimeLogWidget(QWidget):
         self._filter_bar = FilterBar(self)
         self._filter_bar.on_filter = self._table.set_filter
 
-        self._row_count = LabelWithIcon(get_icon('list'), '0', self)
+        self._row_count = LabelWithIcon(get_icon('fa6s.list'), '0', self)
         self._row_count.setToolTip('Row count')
 
         self._redraw_timer = QTimer(self)
@@ -588,7 +588,7 @@ class RealtimeLogWidget(QWidget):
 
 
 def get_icon(name):
-    return qtawesome.icon('fa.' + name)
+    return qtawesome.icon(name)
 
 
 def make_icon_button(icon_name, tool_tip, parent, checkable=False, checked=False, on_clicked=None, text=''):
