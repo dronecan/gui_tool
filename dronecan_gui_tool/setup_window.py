@@ -117,6 +117,11 @@ def list_ifaces():
         try:
             if sys.platform != 'darwin':
                 from can import detect_available_configs
+                try:
+                    import pythoncom
+                    pythoncom.CoInitialize()
+                except Exception:
+                    pass
                 for interface in detect_available_configs():
                     if interface['interface'] == "pcan":
                         out[interface['channel']] = interface['channel']
