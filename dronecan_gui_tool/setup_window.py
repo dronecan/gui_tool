@@ -115,6 +115,8 @@ def list_ifaces():
 
         try:
             from can import detect_available_configs
+            import pythoncom
+            pythoncom.CoInitialize()
             for interface in detect_available_configs():
                 if interface['interface'] == "pcan":
                     out[interface['channel']] = interface['channel']
