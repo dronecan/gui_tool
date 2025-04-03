@@ -56,7 +56,7 @@ class LocalNodeWidget(QGroupBox):
         self._node_id_spinbox.setValue(NODE_ID_MAX)
         self._node_id_spinbox.valueChanged.connect(self._update)
 
-        self._node_id_apply = make_icon_button('fa6s.check', 'Apply local node ID', self,
+        self._node_id_apply = make_icon_button('fa6s.hand', 'Apply local node ID', self, text='Set',
                                                on_clicked=self._on_node_id_apply_clicked)
 
         self._update_timer = QTimer(self)
