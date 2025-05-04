@@ -30,7 +30,7 @@ assert DEFAULT_BAUD_RATE in STANDARD_BAUD_RATES
 
 RUNNING_ON_LINUX = 'linux' in sys.platform.lower()
 
-
+MACOS_SERIAL_PORTS_FILTER = ['/dev/tty.debug-console', '/dev/tty.wlan-debug', '/dev/tty.Bluetooth-Incoming-Port']
 logger = getLogger(__name__)
 
 
@@ -100,7 +100,8 @@ def list_ifaces():
         for port in QtSerialPort.QSerialPortInfo.availablePorts():
             if sys.platform == 'darwin':
                 if 'tty' in port.systemLocation():
-                    out[port.systemLocation()] = port.systemLocation()
+                    if port.systemLocation() not in MACOS_SERIAL_PORTS_FILTER:
+                        out[port.systemLocation()] = port.systemLocation()
             else:
                 sys_name = port.systemLocation()
                 sys_alpha = re.sub(r'[^a-zA-Z0-9]', '', sys_name)
