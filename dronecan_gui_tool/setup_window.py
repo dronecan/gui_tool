@@ -115,10 +115,11 @@ def list_ifaces():
             out[x] = x
 
         try:
-            from can import detect_available_configs
-            for interface in detect_available_configs():
-                if interface['interface'] == "pcan":
-                    out[interface['channel']] = interface['channel']
+            if sys.platform != 'darwin':
+                from can import detect_available_configs
+                for interface in detect_available_configs():
+                    if interface['interface'] == "pcan":
+                        out[interface['channel']] = interface['channel']
         except Exception as ex:
             logger.warning('Could not load can interfaces: %s', ex, exc_info=True)
 
