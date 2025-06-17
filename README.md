@@ -40,12 +40,12 @@ but it may come in handy when using the embedded IPython console.
 ```bash
 sudo apt-get install -y python3-pip python3-setuptools python3-wheel
 sudo apt-get install -y python3-numpy python3-pyqt5 python3-pyqt5.qtsvg git-core
-sudo pip3 install git+https://github.com/DroneCAN/gui_tool@master
+python3 -m pip install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
 #### Troubleshooting
 
-If installation fails with an error like below, try to install IPython directly with `sudo pip3 install ipython`:
+If installation fails with an error like below, try to install IPython directly with `python3 -m pip install ipython`:
 
 > error: Setup script exited with error in ipython setup command:
 > Invalid environment marker: sys_platform == "darwin" and platform_python_implementation == "CPython"
@@ -59,7 +59,7 @@ If you're still unable to install the package, please open a ticket.
 #### Fedora 29+
 ```bash
 sudo dnf install python3-PyQt5
-sudo pip3 install git+https://github.com/DroneCAN/gui_tool@master
+python3 -m pip install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
 ## Installing on Windows
@@ -101,7 +101,7 @@ If you're prompted to install Command Line Developer Tools, agree.
 ```bash
 sudo port selfupdate
 sudo port install curl-ca-bundle py35-pip py35-pyqt5 py35-numpy
-sudo python3.5 -m pip install git+https://github.com/DroneCAN/gui_tool@master
+python3.5 -m pip install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
 We would like to provide prebuilt application packages instead of the mess above.
