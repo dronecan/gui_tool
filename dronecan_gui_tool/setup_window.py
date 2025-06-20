@@ -13,7 +13,7 @@ import threading
 import copy
 from .widgets import show_error, get_monospace_font, directory_selection
 from PyQt5.QtWidgets import QComboBox, QCompleter, QDialog, QDirModel, QFileDialog, QGroupBox, QHBoxLayout, QLabel, \
-    QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QGridLayout, QCheckBox
+    QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QGridLayout, QCheckBox, QWidget
 from qtwidgets import PasswordEdit
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIntValidator
@@ -309,6 +309,16 @@ def run_setup_window(icon, dsdl_path=None):
     layout.addWidget(ok)
     layout.setSizeConstraint(layout.SetFixedSize)
     win.setLayout(layout)
+
+    QWidget.setTabOrder(combo, bus_number)
+    QWidget.setTabOrder(bus_number, bitrate)
+    QWidget.setTabOrder(bitrate, baudrate)
+    QWidget.setTabOrder(baudrate, filtered)
+    QWidget.setTabOrder(filtered, target_system)
+    QWidget.setTabOrder(target_system, signing_key)
+    QWidget.setTabOrder(signing_key, dir_selection)
+    QWidget.setTabOrder(dir_selection, ok)
+    QWidget.setTabOrder(ok, combo)
 
     with BackgroundIfaceListUpdater() as iface_lister:
         update_iface_list()
