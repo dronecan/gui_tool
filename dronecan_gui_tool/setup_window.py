@@ -158,7 +158,7 @@ class BackgroundIfaceListUpdater:
             return copy.copy(self._ifaces)
 
 
-def run_setup_window(icon, dsdl_path=None):
+def run_setup_window(icon, dsdl_path=None, config_baudrate=DEFAULT_BAUD_RATE, config_bitrate=1000000, config_can_bus=1, enable_filtering=False, mavlink_target_system=0, mavlink_signing_key=''):
     win = QDialog()
     win.setWindowTitle('Application Setup')
     win.setWindowIcon(icon)
@@ -179,12 +179,12 @@ def run_setup_window(icon, dsdl_path=None):
     bitrate = QSpinBox(win)
     bitrate.setMaximum(1000000)
     bitrate.setMinimum(10000)
-    bitrate.setValue(1000000)
+    bitrate.setValue(config_bitrate)
 
     bus_number = QSpinBox(win)
     bus_number.setMaximum(4)
     bus_number.setMinimum(1)
-    bus_number.setValue(1)
+    bus_number.setValue(config_can_bus)
     
     baudrate = QComboBox(win)
     baudrate.setEditable(True)
@@ -198,16 +198,18 @@ def run_setup_window(icon, dsdl_path=None):
 
     baudrate.setValidator(QIntValidator(min(STANDARD_BAUD_RATES), max(STANDARD_BAUD_RATES)))
     baudrate.insertItems(0, map(str, STANDARD_BAUD_RATES))
-    baudrate.setCurrentText(str(DEFAULT_BAUD_RATE))
+    baudrate.setCurrentText(str(config_baudrate))
 
     filtered = QCheckBox('Enable Filtering')
+    filtered.setChecked(enable_filtering)
 
     target_system = QSpinBox(win)
     target_system.setMaximum(255)
     target_system.setMinimum(0)
-    target_system.setValue(0)
+    target_system.setValue(mavlink_target_system)
 
     signing_key = PasswordEdit(win)
+    signing_key.setText(mavlink_signing_key)
 
     dir_selection = directory_selection.DirectorySelectionWidget(win, 'Location of custom DSDL definitions [optional]', path=dsdl_path, directory_only=True)
 
