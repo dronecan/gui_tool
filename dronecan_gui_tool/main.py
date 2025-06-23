@@ -21,6 +21,12 @@ parser = ArgumentParser(description='DroneCAN GUI tool')
 parser.add_argument("--debug", action='store_true', help="enable debugging")
 parser.add_argument("--dsdl", help="path to custom DSDL")
 parser.add_argument("--signing-passphrase", help="MAVLink2 signing passphrase", default=None)
+parser.add_argument("--interface", help="skip the setup dialog by setting the device to connect to")
+parser.add_argument("--baudrate", help="set the baudrate", type=int, default=115200)
+parser.add_argument("--bitrate", help="set the bitrate of the CAN Bus", type=int, default=1000000)
+parser.add_argument("--bus", help="set the CAN Bus number", type=int, default=1)
+parser.add_argument("--filtered", action='store_true', help="enable filtering of DroneCAN traffic")
+parser.add_argument("--target-system", help="set the targetted system", type=int, default=0)
 
 args = parser.parse_args()
 
@@ -60,6 +66,8 @@ if multiprocessing.get_start_method(True) != 'spawn':
 #
 # Importing other stuff once the logging has been configured
 #
+from serial import SerialException
+
 import dronecan
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QSplitter, QAction
@@ -578,7 +586,18 @@ def main():
     while True:
         # Asking the user to specify which interface to work with
         try:
-            iface, iface_kwargs, dsdl_directory = run_setup_window(get_app_icon(), args.dsdl)
+            if args.interface is not None:
+                iface = args.interface
+                iface_kwargs = {}
+                iface_kwargs['baudrate'] = int(args.baudrate)
+                iface_kwargs['bitrate'] = int(args.bitrate)
+                iface_kwargs['bus_number'] = int(args.bus)
+                iface_kwargs['filtered'] = bool(args.filtered)
+                iface_kwargs['mavlink_target_system'] = int(args.target_system)
+                iface_kwargs['mavlink_signing_key'] = str(args.signing_passphrase if args.signing_passphrase is not None else '')
+                dsdl_directory = args.dsdl
+            else:
+                iface, iface_kwargs, dsdl_directory = run_setup_window(get_app_icon(), args.dsdl, args.baudrate, args.bitrate, args.bus, args.filtered, args.target_system, args.signing_passphrase)
             if not iface:
                 sys.exit(0)
         except Exception as ex:
@@ -624,6 +643,13 @@ def main():
             # allow unrecognized messages on startup:
             logger.warning('DroneCAN Transfer Error occurred on startup', exc_info=True)
             break
+        except SerialException as ex:
+            logger.error('DroneCAN node init failed', exc_info=True)
+            show_error('Error', 'Could not find serial port', ex, blocking=True)
+
+            # The serial port had a fault, so reset args and the interface and return to the setup window
+            args.interface = None
+            iface = None
         except Exception as ex:
             logger.error('DroneCAN node init failed', exc_info=True)
             show_error('Fatal error', 'Could not initialize DroneCAN node', ex, blocking=True)
