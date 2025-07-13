@@ -18,6 +18,8 @@ from . import RemoteID_panel
 from . import hobbywing_esc
 from . import rc_panel
 
+import importlib.util
+
 class PanelDescriptor:
     def __init__(self, module):
         self.name = module.PANEL_NAME
@@ -36,6 +38,23 @@ class PanelDescriptor:
         except Exception as ex:
             show_error('Panel error', 'Could not spawn panel', ex)
 
+def import_panel(name):
+    """Given a package name like 'foo.bar.quux', imports the package
+    and returns the desired module."""
+    spec = importlib.util.find_spec(name)
+    mod = None
+    if spec is None:
+        raise Exception(f"Module '{name}' not found!")
+    else:
+        mod = importlib.import_module(name)
+        print(f"Successfully imported {name} from {mod.__file__}")
+    return PluginPanelDescriptor(mod)
+
+class PluginPanelDescriptor(PanelDescriptor):
+    def __init__(self, module):
+        super().__init__(module)
+
+        self.menu_path = getattr(module, "MENU_PATH", "")
 
 PANELS = [
     PanelDescriptor(esc_panel),
