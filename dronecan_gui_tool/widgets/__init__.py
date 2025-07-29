@@ -11,7 +11,7 @@ import re
 import pkg_resources
 import queue
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QApplication, QWidget, \
-    QComboBox, QCompleter, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox
+    QComboBox, QCompleter, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox, QFileDialog
 from PyQt5.QtCore import Qt, QTimer, QStringListModel
 from PyQt5.QtGui import QColor, QKeySequence, QFont, QFontInfo, QIcon
 from logging import getLogger
@@ -178,6 +178,145 @@ class BasicTable(QTableWidget):
             if current_row < 0:
                 current_row = self.rowCount() - 1
 
+    def store_log(self, filename):
+        # Get column names dynamically from the table's actual columns
+        column_names = [col.name for col in self.columns]
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            # Write XML header
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            f.write('<dronecan_log>\n')
+            
+            for row in range(self.rowCount()):
+                f.write('  <frame>\n')
+                
+                for col, column_name in enumerate(column_names):
+                    # Get the table item
+                    item = self.item(row, col)
+                    field_value = item.text() if item else ''
+                    
+                    # Get background color if it exists
+                    background_color = None
+                    if item and item.background().color().isValid():
+                        color = item.background().color()
+                        
+                        # Check if this is a meaningful color (not default background)
+                        # Skip colors that are:
+                        # - Transparent (alpha = 0)
+                        # - Pure black (#000000) - likely default text color being misread
+                        # - Very light colors (> 245 on all RGB) - likely default/alternating row colors
+                        # - Pure white (#ffffff) - default background
+                        is_meaningful_color = (
+                            color.alpha() > 0 and
+                            not (color.red() == 0 and color.green() == 0 and color.blue() == 0) and  # Not black
+                            not (color.red() == 255 and color.green() == 255 and color.blue() == 255) and  # Not white
+                            not (color.red() > 245 and color.green() > 245 and color.blue() > 245)  # Not very light gray
+                        )
+                        
+                        if is_meaningful_color:
+                            background_color = color.name()  # Returns hex format like #ff0000
+                    
+                    # Convert column name to XML-safe element name for comparison
+                    element_name = column_name.lower().replace(" ", "_").replace("-", "_")
+                    
+                    # For data_hex and data_ascii fields, preserve original formatting (including newlines)
+                    # For other fields, normalize whitespace
+                    if element_name in ['data_hex', 'data_ascii']:
+                        # Keep original formatting but still escape XML characters
+                        processed_value = field_value
+                    else:
+                        # Normalize whitespace - replace newlines and multiple spaces with single spaces
+                        processed_value = ' '.join(field_value.split())
+                    
+                    # Escape XML special characters
+                    processed_value = processed_value.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&apos;')
+                    
+                    # Write the element with optional color attribute
+                    if background_color:
+                        f.write(f'    <{element_name} color="{background_color}">{processed_value}</{element_name}>\n')
+                    else:
+                        f.write(f'    <{element_name}>{processed_value}</{element_name}>\n')
+                
+                f.write('  </frame>\n')
+            
+            f.write('</dronecan_log>\n')
+
+    def load_log(self, filename):
+        import xml.etree.ElementTree as ET
+        
+        try:
+            # Parse the XML file
+            tree = ET.parse(filename)
+            root = tree.getroot()
+            
+            # Verify it's a dronecan_log file
+            if root.tag != 'dronecan_log':
+                raise ValueError("Not a valid DroneCAN log file - root element should be 'dronecan_log'")
+            
+            # Get column names from the table
+            column_names = [col.name for col in self.columns]
+            
+            # Clear existing data
+            self.setRowCount(0)
+            
+            # Process each frame
+            for frame in root.findall('frame'):
+                row_data = []
+                color_data = []
+                
+                # For each column, try to find the corresponding XML element
+                for col in self.columns:
+                    element_name = col.name.lower().replace(" ", "_").replace("-", "_")
+                    element = frame.find(element_name)
+                    
+                    if element is not None and element.text is not None:
+                        # Unescape XML characters
+                        value = element.text.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"').replace('&apos;', "'")
+                        
+                        # For data_hex and data_ascii, preserve any formatting (including newlines)
+                        # For other fields, the value is already processed
+                        row_data.append(value)
+                        
+                        # Extract color attribute if present
+                        color_attr = element.get('color')
+                        if color_attr:
+                            try:
+                                color = QColor(color_attr)
+                                color_data.append(color if color.isValid() else None)
+                            except:
+                                color_data.append(None)
+                        else:
+                            color_data.append(None)
+                    else:
+                        row_data.append('')  # Empty string for missing data
+                        color_data.append(None)
+                
+                # Add the row to the table
+                if row_data:  # Only add if we have some data
+                    row_index = self.rowCount()
+                    self.insertRow(row_index)
+                    
+                    for col_index, (value, color) in enumerate(zip(row_data, color_data)):
+                        if col_index < len(self.columns):
+                            item = QTableWidgetItem(str(value))
+                            item.setTextAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+                            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                            
+                            # Set background color if available
+                            if color is not None:
+                                item.setBackground(color)
+                            
+                            self.setItem(row_index, col_index, item)
+            
+            return True
+            
+        except ET.ParseError as e:
+            logger.error(f"XML parsing error: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Error loading log file: {e}")
+            return False
+
     def set_filter(self, matcher):
         self.filter = matcher
         self.setUpdatesEnabled(False)
@@ -339,6 +478,23 @@ class SearchBar(QWidget):
             if result is None:
                 flash(self, 'Nothing found', duration=10)
 
+class StoreLogsButton(QPushButton):
+    def __init__(self, parent, on_clicked=None):
+        super(StoreLogsButton, self).__init__(parent)
+        self.setIcon(get_icon('fa6s.floppy-disk'))
+        self.setToolTip('Store logs')
+        self.setFocusPolicy(Qt.NoFocus)
+        if on_clicked:
+            self.clicked.connect(on_clicked)
+
+class LoadLogsButton(QPushButton):
+    def __init__(self, parent, on_clicked=None):
+        super(LoadLogsButton, self).__init__(parent)
+        self.setIcon(get_icon('fa6s.folder-open'))
+        self.setToolTip('Load logs')
+        self.setFocusPolicy(Qt.NoFocus)
+        if on_clicked:
+            self.clicked.connect(on_clicked)
 
 class FilterBar(QWidget):
     class Filter(QWidget):
@@ -481,6 +637,15 @@ class RealtimeLogWidget(QWidget):
         self._filter_bar = FilterBar(self)
         self._filter_bar.on_filter = self._table.set_filter
 
+        self._store_button = StoreLogsButton(self)
+        self._store_button.clicked.connect(self._on_store_button_clicked)
+
+        self._load_button = LoadLogsButton(self)
+        self._load_button.clicked.connect(self._on_load_button_clicked)
+
+        # Track the last used filename for the store dialog
+        self._last_store_filename = None
+
         self._row_count = LabelWithIcon(get_icon('fa6s.list'), '0', self)
         self._row_count.setToolTip('Row count')
 
@@ -499,6 +664,8 @@ class RealtimeLogWidget(QWidget):
         controls_layout.addWidget(self._clear_button)
         controls_layout.addWidget(self._search_bar.show_search_bar_button)
         controls_layout.addWidget(self._filter_bar.add_filter_button)
+        controls_layout.addWidget(self._store_button)
+        controls_layout.addWidget(self._load_button)
 
         self._custom_area_layout = QHBoxLayout(self)
         self._custom_area_layout.setContentsMargins(0, 0, 0, 0)
@@ -513,6 +680,59 @@ class RealtimeLogWidget(QWidget):
         layout.addWidget(self._table, 1)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
+
+    def _on_store_button_clicked(self):
+        # Determine the default filename
+        if self._last_store_filename:
+            default_filename = self._last_store_filename
+        else:
+            default_filename = 'dronecan_log.xml'
+        
+        # Open the save file dialog
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            'Save DroneCAN Log',
+            default_filename,
+            'XML files (*.xml);;All files (*.*)'
+        )
+        
+        # If a file was selected, store it for next time
+        if filename:
+            self._last_store_filename = filename
+            # Store the data in the table to the file
+            self._table.store_log(filename)
+            flash(self, 'Log saved to: %s', filename, duration=5)
+
+    def _on_load_button_clicked(self):
+        # Open the load file dialog
+        filename, _ = QFileDialog.getOpenFileName(
+            self,
+            'Load DroneCAN Log',
+            '',
+            'XML files (*.xml);;All files (*.*)'
+        )
+        
+        # If a file was selected, load it
+        if filename:
+            # Pause updates while loading
+            was_paused = self.paused
+            self._pause.setChecked(True)
+            
+            # Load the data
+            success = self._table.load_log(filename)
+            
+            if success:
+                flash(self, 'Log loaded from: %s (%d rows)', filename, self._table.rowCount(), duration=5)
+                # Update the row count display
+                self._row_count.setText(str(self._table.rowCount()))
+            else:
+                flash(self, 'Failed to load log from: %s', filename, duration=10)
+                show_error('Load Error', 'Failed to load the selected log file.', 
+                          'Please check that the file is a valid DroneCAN XML log file.', self)
+            
+            # Restore pause state if it wasn't paused before
+            if not was_paused:
+                self._pause.setChecked(False)
 
     def keyPressEvent(self, qkeyevent):
         super(RealtimeLogWidget, self).keyPressEvent(qkeyevent)
