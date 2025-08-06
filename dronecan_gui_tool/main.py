@@ -18,6 +18,7 @@ assert sys.version[0] == '3'
 from argparse import ArgumentParser
 parser = ArgumentParser(description='DroneCAN GUI tool')
 
+parser.add_argument("--version", action='store_true', help="show version info")
 parser.add_argument("--debug", action='store_true', help="enable debugging")
 parser.add_argument("--dsdl", help="path to custom DSDL")
 parser.add_argument("--signing-passphrase", help="MAVLink2 signing passphrase", default=None)
@@ -40,6 +41,13 @@ else:
 
 logging.basicConfig(stream=sys.stderr, level=logging_level,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
+
+from .version import __version__
+if args.version:
+    v = '.'.join(map(str, __version__))
+    print("DroneCAN GUI Tool is an application for DroneCAN bus management and diagnostics")
+    print(f"DroneCAN GUI Tool Version: {v}")
+    sys.exit(0)
 
 log_file = tempfile.NamedTemporaryFile(mode='w', prefix='dronecan_gui_tool-', suffix='.log', delete=False)
 file_handler = logging.FileHandler(log_file.name)
@@ -74,7 +82,6 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QSp
 from PyQt5.QtGui import QKeySequence, QDesktopServices
 from PyQt5.QtCore import QTimer, Qt, QUrl
 
-from .version import __version__
 from .setup_window import run_setup_window
 from .active_data_type_detector import ActiveDataTypeDetector
 
