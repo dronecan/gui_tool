@@ -141,6 +141,13 @@ def list_ifaces():
                 for interface in detect_available_configs():
                     if interface['interface'] == "pcan":
                         out[interface['channel']] = interface['channel']
+                    elif interface['interface'] == "usb2can":
+                        # Add USB2CAN (8devices Korlan) interfaces with descriptive name
+                        # Store as "usb2can:channel" to specify the bustype
+                        display_name = "8devices USB2CAN (%s)" % interface['channel']
+                        interface_spec = "usb2can:%s" % interface['channel'] 
+                        out[display_name] = interface_spec
+                        logger.info('Added USB2CAN interface: %s -> %s', display_name, interface_spec)
         except Exception as ex:
             logger.warning('Could not load can interfaces: %s', ex, exc_info=True)
 

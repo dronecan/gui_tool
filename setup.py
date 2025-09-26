@@ -111,7 +111,7 @@ if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
 # Windows-specific options and hacks
 #
 if os.name == 'nt':
-    args.setdefault('install_requires', []).append('cx_Freeze ~= 6.1')
+    args.setdefault('install_requires', []).append('cx_Freeze >= 6.1')
 
 if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     import cx_Freeze
@@ -122,6 +122,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
         'qtpy',
         'qtconsole',
         'easywebdav',
+        'python-can',  # Add python-can to unpacked eggs (package name is python-can, import name is can)
     ]
     unpacked_eggs_dir = os.path.join('build', 'hatched_eggs')
     sys.path.insert(0, unpacked_eggs_dir)
@@ -144,6 +145,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     import jupyter_client
     import traitlets
     import numpy
+    import can  # Add python-can import
 
     # Oh, Windows, never change.
     missing_dlls = glob.glob(os.path.join(os.path.dirname(numpy.core.__file__), '*.dll'))
@@ -157,6 +159,41 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
                 'zmq',
                 'pygments',
                 'jupyter_client',
+                # Add python-can and related packages
+                'can',
+                'can.interfaces',
+                'can.interfaces.usb2can',
+                # Add only the most critical missing modules
+                'traceback',
+                'token',
+                'threading',
+                'queue',
+                'logging',
+                'json',
+                'urllib',
+                'socket',
+                'ssl',
+                'datetime',
+                'multiprocessing',
+                'subprocess',
+                'tempfile',
+                'shutil',
+                'glob',
+                'pathlib',
+                'io',
+                'platform',
+                'importlib',
+                'encodings',
+                'enum',
+                'contextlib',
+                'configparser',
+                'winreg',
+                'msvcrt',
+                'email',
+                'csv',
+                'xml',
+                'zlib',
+                'zipfile',
             ],
             'include_msvcr': True,
             'include_files': [
@@ -172,6 +209,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
                 os.path.join(unpacked_eggs_dir, os.path.dirname(jupyter_client.__file__)),
                 os.path.join(unpacked_eggs_dir, os.path.dirname(traitlets.__file__)),
                 os.path.join(unpacked_eggs_dir, os.path.dirname(numpy.__file__)),
+                os.path.join(unpacked_eggs_dir, os.path.dirname(can.__file__)),  # Include python-can package files
             ] + missing_dlls,
         },
         'bdist_msi': {
