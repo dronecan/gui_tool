@@ -71,7 +71,7 @@ class RTKPanel(QDialog):
         layout = QVBoxLayout()
 
         # Fix2 display
-        self.fix2_table = table_display.TableDisplay(['Node','Status','NumSats', 'Rate(Hz)'])
+        self.fix2_table = table_display.TableDisplay(['Node','Status','NumSats','PDOP','Rate(Hz)'])
         self.fix2_last_time = {}
         self.fix2_dt = {}
 
@@ -146,7 +146,7 @@ The distance should match the actual distance between the antennas.
         status_key = (msg.message.status, msg.message.mode, msg.message.sub_mode)
         status_str = fix_status.get(status_key, str(status_key))
         rate_str = "%.1f" % (1.0 / self.fix2_dt[nodeid])
-        self.fix2_table.update(nodeid, [nodeid, status_str, msg.message.sats_used, rate_str])
+        self.fix2_table.update(nodeid, [nodeid, status_str, msg.message.sats_used, round(msg.message.pdop, 1), rate_str])
         #print(nodeid, dronecan.to_yaml(msg))
 
     def handle_RTCM_MovingBase(self, msg):
