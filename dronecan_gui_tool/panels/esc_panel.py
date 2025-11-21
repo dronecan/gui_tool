@@ -294,9 +294,17 @@ class ESCPanel(QDialog):
                         msg = dronecan.ardupilot.indication.SafetyState()
                         msg.status = msg.STATUS_SAFETY_OFF
                         self._node.broadcast(msg)
+                    else:
+                        msg = dronecan.ardupilot.indication.SafetyState()
+                        msg.status = msg.STATUS_SAFETY_ON
+                        self._node.broadcast(msg)
                     if self._arming_enable.checkState():
                         msg = dronecan.uavcan.equipment.safety.ArmingStatus()
                         msg.status = msg.STATUS_FULLY_ARMED
+                        self._node.broadcast(msg)
+                    else:
+                        msg = dronecan.uavcan.equipment.safety.ArmingStatus()
+                        msg.status = msg.STATUS_DISARMED
                         self._node.broadcast(msg)
                     msg = dronecan.uavcan.equipment.esc.RawCommand()
                     for sl in self._sliders:
