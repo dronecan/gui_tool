@@ -653,6 +653,10 @@ def main():
         except Exception as ex:
             logger.error('DroneCAN node init failed', exc_info=True)
             show_error('Fatal error', 'Could not initialize DroneCAN node', ex, blocking=True)
+
+            # An exception occurred, so reset args and the interface and return to the setup window
+            args.interface = None
+            iface = None
         else:
             break
 
