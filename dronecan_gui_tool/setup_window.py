@@ -96,18 +96,34 @@ def list_ifaces():
         # Windows, Mac, whatever
         from PyQt5 import QtSerialPort
 
-        out = OrderedDict()
+        # Collect ports with priority handling for USB2CAN adapters
+        priority_ports = []  # USB2CAN adapters go first
+        regular_ports = []
+        
         for port in QtSerialPort.QSerialPortInfo.availablePorts():
             if sys.platform == 'darwin':
                 if 'tty' in port.systemLocation():
                     if port.systemLocation() not in MACOS_SERIAL_PORTS_FILTER:
-                        out[port.systemLocation()] = port.systemLocation()
+                        regular_ports.append((port.systemLocation(), port.systemLocation()))
             else:
                 sys_name = port.systemLocation()
                 sys_alpha = re.sub(r'[^a-zA-Z0-9]', '', sys_name)
                 description = port.description()
-                # show the COM port in parentheses to make it clearer which port it is
-                out["%s (%s)" % (description, sys_alpha)] = sys_name
+                
+                # Special handling for 8devices Korlan USB2CAN adapter
+                # The Korlan appears in Windows as "USB2CAN converter"
+                if "USB2CAN converter" in description:
+                    display_name = "8devices Korlan USB2CAN (%s)" % sys_alpha
+                    priority_ports.append((display_name, sys_name))
+                else:
+                    # show the COM port in parentheses to make it clearer which port it is
+                    display_name = "%s (%s)" % (description, sys_alpha)
+                    regular_ports.append((display_name, sys_name))
+
+        # Build output with priority ports first
+        out = OrderedDict()
+        for display_name, sys_name in priority_ports + regular_ports:
+            out[display_name] = sys_name
 
         mifaces = _mavcan_interfaces()
         mifaces += ["mcast:0", "mcast:1"]
@@ -125,6 +141,13 @@ def list_ifaces():
                 for interface in detect_available_configs():
                     if interface['interface'] == "pcan":
                         out[interface['channel']] = interface['channel']
+                    elif interface['interface'] == "usb2can":
+                        # Add USB2CAN (8devices Korlan) interfaces with descriptive name
+                        # Store as "usb2can:channel" to specify the bustype
+                        display_name = "8devices USB2CAN (%s)" % interface['channel']
+                        interface_spec = "usb2can:%s" % interface['channel'] 
+                        out[display_name] = interface_spec
+                        logger.info('Added USB2CAN interface: %s -> %s', display_name, interface_spec)
         except Exception as ex:
             logger.warning('Could not load can interfaces: %s', ex, exc_info=True)
 

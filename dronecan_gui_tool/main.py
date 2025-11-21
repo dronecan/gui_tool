@@ -629,7 +629,36 @@ def main():
             node_info.software_version.major = __version__[0]
             node_info.software_version.minor = __version__[1]
 
-            node = dronecan.make_node(iface,
+            # Handle USB2CAN interface specification (format: "usb2can:channel")
+            actual_iface = iface
+            if iface and ':' in iface:
+                bustype, channel = iface.split(':', 1) 
+                if bustype == 'usb2can':
+                    # For USB2CAN interfaces, specify the bustype and DLL path
+                    import platform
+                    import os
+                    
+                    actual_iface = channel
+                    iface_kwargs['bustype'] = 'usb2can'
+                    
+                    # Determine the correct DLL path based on architecture
+                    current_dir = os.path.dirname(os.path.abspath(__file__))
+                    gui_tool_dir = os.path.dirname(current_dir)  
+                    
+                    if platform.machine().lower() in ['amd64', 'x86_64', 'x64']:
+                        dll_path = os.path.join(gui_tool_dir, 'bin', 'usb2can_canal_v2.0.0', 'x64', 'Release', 'usb2can.dll')
+                    else:
+                        dll_path = os.path.join(gui_tool_dir, 'bin', 'usb2can_canal_v2.0.0', 'x86', 'Release', 'usb2can.dll')
+                    
+                    iface_kwargs['dll'] = dll_path
+                    logger.info('Using USB2CAN interface: channel=%s, dll=%s', channel, dll_path)
+                elif bustype == 'pcan':
+                    # PCAN interfaces should also specify bustype
+                    actual_iface = channel
+                    iface_kwargs['bustype'] = 'pcan'
+                    logger.info('Using PCAN interface: channel=%s', channel)
+
+            node = dronecan.make_node(actual_iface,
                                     node_info=node_info,
                                     mode=dronecan.uavcan.protocol.NodeStatus().MODE_OPERATIONAL,
                                     **iface_kwargs)
