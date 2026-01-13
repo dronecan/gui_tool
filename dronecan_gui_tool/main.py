@@ -27,6 +27,7 @@ parser.add_argument("--bitrate", help="set the bitrate of the CAN Bus", type=int
 parser.add_argument("--bus", help="set the CAN Bus number", type=int, default=1)
 parser.add_argument("--filtered", action='store_true', help="enable filtering of DroneCAN traffic")
 parser.add_argument("--target-system", help="set the targetted system", type=int, default=0)
+parser.add_argument("--source-system", help="set the source system", type=int, default=250)
 
 args = parser.parse_args()
 
@@ -593,11 +594,12 @@ def main():
                 iface_kwargs['bitrate'] = int(args.bitrate)
                 iface_kwargs['bus_number'] = int(args.bus)
                 iface_kwargs['filtered'] = bool(args.filtered)
+                iface_kwargs['mavlink_source_system'] = int(args.source_system)
                 iface_kwargs['mavlink_target_system'] = int(args.target_system)
                 iface_kwargs['mavlink_signing_key'] = str(args.signing_passphrase if args.signing_passphrase is not None else '')
                 dsdl_directory = args.dsdl
             else:
-                iface, iface_kwargs, dsdl_directory = run_setup_window(get_app_icon(), args.dsdl, args.baudrate, args.bitrate, args.bus, args.filtered, args.target_system, args.signing_passphrase)
+                iface, iface_kwargs, dsdl_directory = run_setup_window(get_app_icon(), args.dsdl, args.baudrate, args.bitrate, args.bus, args.filtered, args.target_system, args.signing_passphrase, args.source_system)
             if not iface:
                 sys.exit(0)
         except Exception as ex:

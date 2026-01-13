@@ -163,7 +163,7 @@ class BackgroundIfaceListUpdater:
             return copy.copy(self._ifaces)
 
 
-def run_setup_window(icon, dsdl_path=None, config_baudrate=DEFAULT_BAUD_RATE, config_bitrate=1000000, config_can_bus=1, enable_filtering=False, mavlink_target_system=0, mavlink_signing_key=''):
+def run_setup_window(icon, dsdl_path=None, config_baudrate=DEFAULT_BAUD_RATE, config_bitrate=1000000, config_can_bus=1, enable_filtering=False, mavlink_target_system=0, mavlink_signing_key='', mavlink_source_system=250):
     win = QDialog()
     win.setWindowTitle('Application Setup')
     win.setWindowIcon(icon)
@@ -207,6 +207,11 @@ def run_setup_window(icon, dsdl_path=None, config_baudrate=DEFAULT_BAUD_RATE, co
 
     filtered = QCheckBox('Enable Filtering')
     filtered.setChecked(enable_filtering)
+
+    source_system = QSpinBox(win)
+    source_system.setMaximum(255)
+    source_system.setMinimum(1)
+    source_system.setValue(mavlink_source_system)
 
     target_system = QSpinBox(win)
     target_system.setMaximum(255)
@@ -270,6 +275,7 @@ def run_setup_window(icon, dsdl_path=None, config_baudrate=DEFAULT_BAUD_RATE, co
         kwargs['bitrate'] = int(bitrate.value())
         kwargs['bus_number'] = int(bus_number.value())
         kwargs['filtered'] = filtered.checkState()
+        kwargs['mavlink_source_system'] = int(source_system.value())
         kwargs['mavlink_target_system'] = int(target_system.value())
         kwargs['mavlink_signing_key'] = signing_key.text()
         result_key = str(combo.currentText()).strip()
@@ -300,10 +306,12 @@ def run_setup_window(icon, dsdl_path=None, config_baudrate=DEFAULT_BAUD_RATE, co
     adapter_layout.addWidget(baudrate, 2, 1)
     adapter_layout.addWidget(QLabel('Filter for low bandwidth:'), 3, 0)
     adapter_layout.addWidget(filtered, 3, 1)
-    adapter_layout.addWidget(QLabel('MAVLink target system (0 for auto):'), 4, 0)
-    adapter_layout.addWidget(target_system, 4, 1)
-    adapter_layout.addWidget(QLabel('MAVLink signing key:'), 5, 0)
-    adapter_layout.addWidget(signing_key, 5, 1)
+    adapter_layout.addWidget(QLabel('MAVLink source system:'), 4, 0)
+    adapter_layout.addWidget(source_system, 4, 1)
+    adapter_layout.addWidget(QLabel('MAVLink target system (0 for auto):'), 5, 0)
+    adapter_layout.addWidget(target_system, 5, 1)
+    adapter_layout.addWidget(QLabel('MAVLink signing key:'), 6, 0)
+    adapter_layout.addWidget(signing_key, 6, 1)
 
     adapter_group.setLayout(adapter_layout)
 
@@ -321,7 +329,8 @@ def run_setup_window(icon, dsdl_path=None, config_baudrate=DEFAULT_BAUD_RATE, co
     QWidget.setTabOrder(bus_number, bitrate)
     QWidget.setTabOrder(bitrate, baudrate)
     QWidget.setTabOrder(baudrate, filtered)
-    QWidget.setTabOrder(filtered, target_system)
+    QWidget.setTabOrder(filtered, source_system)
+    QWidget.setTabOrder(source_system, target_system)
     QWidget.setTabOrder(target_system, signing_key)
     QWidget.setTabOrder(signing_key, dir_selection)
     QWidget.setTabOrder(dir_selection, ok)
