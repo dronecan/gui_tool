@@ -56,6 +56,11 @@ class PercentSlider(QWidget):
         self._temperature_label = QLabel('Temp: NC', self)
         self._rpm_label = QLabel('RPM: NC', self)
         self._power_rating_pct_label = QLabel('RAT: NC', self)
+        self._fps_label = QLabel('FPS: 0', self)
+
+        self._fps_count = 0
+        self._fps_window_start = time.time()
+        self._fps_last_msg_time = 0
 
         layout = QHBoxLayout(self)
 
@@ -67,6 +72,7 @@ class PercentSlider(QWidget):
         status_layout.addWidget(self._temperature_label)
         status_layout.addWidget(self._rpm_label)
         status_layout.addWidget(self._power_rating_pct_label)
+        status_layout.addWidget(self._fps_label)
         status_layout.addStretch()
         status_layout.addWidget(self._spinbox)
         status_layout.addWidget(self._zero_button)
@@ -92,9 +98,25 @@ class PercentSlider(QWidget):
             self._slider.setValue(value)
             self._spinbox.setValue(value)
 
+    def check_fps_timeout(self):
+        now = time.time()
+        if self._fps_last_msg_time > 0 and now - self._fps_last_msg_time >= 1.0:
+            self._fps_label.setText('FPS: 0.0')
+            self._fps_count = 0
+            self._fps_window_start = now
+            self._fps_last_msg_time = 0
+
     def update_status(self, idx, error_count, voltage, current, temperature_celsius, rpm, power_rating_pct):
         if idx != self._index:
             return
+        now = time.time()
+        self._fps_count += 1
+        self._fps_last_msg_time = now
+        elapsed = now - self._fps_window_start
+        if elapsed >= 1.0:
+            self._fps_label.setText(f'FPS: {self._fps_count / elapsed:.1f}')
+            self._fps_count = 0
+            self._fps_window_start = now
         if error_count is not None:
             self._error_count_label.setText(f'Err: {error_count}')
         if voltage is not None:
@@ -288,6 +310,8 @@ class ESCPanel(QDialog):
     def _do_broadcast(self):
         try:
             self._update_view_mode()
+            for sl in self._sliders:
+                sl.check_fps_timeout()
             if not self._view_mode.isChecked():
                 if not self._pause.isChecked():
                     if self._safety_enable.checkState():
