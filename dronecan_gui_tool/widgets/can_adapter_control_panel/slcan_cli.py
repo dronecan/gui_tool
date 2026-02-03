@@ -281,7 +281,7 @@ class ConfigWidget(QWidget):
 
         self._have_unsaved_changes = False
 
-        self._fetch_button = make_icon_button('fa6s.arrows-roatate',
+        self._fetch_button = make_icon_button('fa6s.arrows-rotate',
                                               'Fetch configuration from the adapter',
                                               self, on_clicked=self._do_fetch, text='Fetch')
 
