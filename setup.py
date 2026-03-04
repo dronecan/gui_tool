@@ -10,8 +10,8 @@
 import os
 import sys
 import shutil
-import pkg_resources
 import glob
+from importlib import metadata
 from setuptools import setup, find_packages
 from setuptools.archive_util import unpack_archive
 
@@ -130,9 +130,13 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     except Exception:
         pass
     for dep in dependency_eggs_to_unpack:
-        for egg in pkg_resources.require(dep):
-            if not os.path.isdir(egg.location):
-                unpack_archive(egg.location, unpacked_eggs_dir)
+        try:
+            dist = metadata.distribution(dep)
+        except metadata.PackageNotFoundError:
+            continue
+        dist_location = str(dist.locate_file(''))
+        if not os.path.isdir(dist_location):
+            unpack_archive(dist_location, unpacked_eggs_dir)
 
     import qtawesome
     import qtconsole
@@ -153,7 +157,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     args['options'] = {
         'build_exe': {
             'packages': [
-                'pkg_resources',
+                'importlib.metadata',
                 'zmq',
                 'pygments',
                 'jupyter_client',
