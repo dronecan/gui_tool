@@ -10,10 +10,8 @@
 import os
 import sys
 import shutil
-import pkg_resources
 import glob
 from setuptools import setup, find_packages
-from setuptools.archive_util import unpack_archive
 
 PACKAGE_NAME = 'dronecan_gui_tool'
 HUMAN_FRIENDLY_NAME = 'DroneCAN GUI Tool'
@@ -115,6 +113,8 @@ if os.name == 'nt':
 
 if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     import cx_Freeze
+    import pkg_resources
+    from setuptools.archive_util import unpack_archive
 
     # cx_Freeze can't handle 3rd-party packages packed in .egg files, so we have to extract them for it
     dependency_eggs_to_unpack = [
