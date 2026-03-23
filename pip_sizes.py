@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-from importlib import metadata
+import importlib
 
 def calc_container(path):
     total_size = 0
@@ -13,7 +13,7 @@ def calc_container(path):
 
 
 
-dists = list(metadata.distributions())
+dists = list(importlib.metadata.distributions())
 
 data = {}
 data2 = []

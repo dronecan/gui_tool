@@ -11,7 +11,7 @@ import os
 import sys
 import shutil
 import glob
-from importlib import metadata
+import importlib
 from setuptools import setup, find_packages
 from setuptools.archive_util import unpack_archive
 
@@ -131,8 +131,8 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
         pass
     for dep in dependency_eggs_to_unpack:
         try:
-            dist = metadata.distribution(dep)
-        except metadata.PackageNotFoundError:
+            dist = importlib.metadata.distribution(dep)
+        except importlib.metadata.PackageNotFoundError:
             continue
         dist_location = str(dist.locate_file(''))
         if not os.path.isdir(dist_location):

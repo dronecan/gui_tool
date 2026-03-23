@@ -9,7 +9,7 @@
 import os
 import re
 import queue
-from importlib.resources import as_file, files
+import importlib.resources
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QApplication, QWidget, \
     QComboBox, QCompleter, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox
 from PyQt5.QtCore import Qt, QTimer, QStringListModel
@@ -640,8 +640,8 @@ def get_app_icon():
         pass
     # noinspection PyBroadException
     try:
-        icon_resource = files('dronecan_gui_tool').joinpath('icons', 'dronecan_gui_tool.png')
-        with as_file(icon_resource) as icon_path:
+        icon_resource = importlib.resources.files('dronecan_gui_tool').joinpath('icons', 'dronecan_gui_tool.png')
+        with importlib.resources.as_file(icon_resource) as icon_path:
             _APP_ICON_OBJECT = QIcon(str(icon_path))
     except Exception:
         logger.error('Could not load icon', exc_info=True)
