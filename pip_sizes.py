@@ -21,14 +21,15 @@ data3 = {}
 
 for dist in dists:
     try:
-        path = os.path.join(str(dist._path.parent), dist.metadata['Name'])
+        dist_name = dist.metadata.get('Name', 'unknown')
+        path = os.path.join(str(dist.locate_file('')), dist_name)
+        if not os.path.exists(path):
+            path = os.path.join(str(dist.locate_file('')), dist_name.replace('-', '_'))
         size = calc_container(path)
         if size/1000 > 1.0:
-            #print (f"{dist}: {size/1000} KB")
-            data[size] = f"{dist}: {size/1000} KB"
-            a = f"{dist}"
-            data2.append(a.split()[0])# first word
-            data3[a.split()[0]] = f"{dist}: {size/1000} KB"
+            data[size] = f"{dist_name}: {size/1000} KB"
+            data2.append(dist_name)
+            data3[dist_name] = f"{dist_name}: {size/1000} KB"
     except OSError:
         '{} no longer exists'.format(dist.metadata['Name'])
 

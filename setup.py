@@ -113,7 +113,7 @@ if os.name == 'nt':
 
 if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     import cx_Freeze
-    import pkg_resources
+    import importlib.metadata
     from setuptools.archive_util import unpack_archive
 
     # cx_Freeze can't handle 3rd-party packages packed in .egg files, so we have to extract them for it
@@ -130,9 +130,13 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     except Exception:
         pass
     for dep in dependency_eggs_to_unpack:
-        for egg in pkg_resources.require(dep):
-            if not os.path.isdir(egg.location):
-                unpack_archive(egg.location, unpacked_eggs_dir)
+        try:
+            dist = importlib.metadata.distribution(dep)
+        except importlib.metadata.PackageNotFoundError:
+            continue
+        dist_location = str(dist.locate_file(''))
+        if not os.path.isdir(dist_location):
+            unpack_archive(dist_location, unpacked_eggs_dir)
 
     import qtawesome
     import qtconsole
@@ -153,7 +157,7 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     args['options'] = {
         'build_exe': {
             'packages': [
-                'pkg_resources',
+                'importlib.metadata',
                 'zmq',
                 'pygments',
                 'jupyter_client',
