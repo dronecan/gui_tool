@@ -27,9 +27,10 @@ for dist in dists:
             path = os.path.join(str(dist.locate_file('')), dist_name.replace('-', '_'))
         size = calc_container(path)
         if size/1000 > 1.0:
-            data[size] = f"{dist_name}: {size/1000} KB"
+            dist_label = f"{dist_name} {dist.metadata.get('Version', '')}"
+            data[size] = f"{dist_label}: {size/1000} KB"
             data2.append(dist_name)
-            data3[dist_name] = f"{dist_name}: {size/1000} KB"
+            data3[dist_name] = f"{dist_label}: {size/1000} KB"
     except OSError:
         pass
 
