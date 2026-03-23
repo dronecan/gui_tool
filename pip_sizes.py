@@ -31,7 +31,7 @@ for dist in dists:
             data2.append(dist_name)
             data3[dist_name] = f"{dist_name}: {size/1000} KB"
     except OSError:
-        '{} no longer exists'.format(dist.metadata['Name'])
+        pass
 
 sorted_dict = dict(sorted(data.items()))
 sorted_dict2 = sorted(data2)
