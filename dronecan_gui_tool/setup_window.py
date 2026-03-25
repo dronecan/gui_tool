@@ -12,7 +12,7 @@ import time
 import threading
 import copy
 from .widgets import show_error, get_monospace_font, directory_selection
-from PyQt6.QtWidgets import QComboBox, QCompleter, QDialog, QDirModel, QFileDialog, QGroupBox, QHBoxLayout, QLabel, \
+from PyQt6.QtWidgets import QComboBox, QCompleter, QDialog, QFileDialog, QGroupBox, QHBoxLayout, QLabel, \
     QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QGridLayout, QCheckBox, QWidget
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIntValidator

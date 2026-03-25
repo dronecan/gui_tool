@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, 
 from PyQt6.QtCore import QTimer, Qt
 from logging import getLogger
 from ..widgets import make_icon_button, get_icon, get_monospace_font
-import sip
+from PyQt6 import sip
 import time
 import math
 
