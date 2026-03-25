@@ -8,8 +8,8 @@
 
 import dronecan
 import datetime
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QHeaderView, QPushButton, QLabel
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QHeaderView, QPushButton, QLabel
+from PyQt6.QtCore import Qt
 from logging import getLogger
 from . import BasicTable, RealtimeLogWidget
 

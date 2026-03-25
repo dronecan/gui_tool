@@ -8,11 +8,11 @@
 
 import dronecan
 from functools import partial
-from PyQt5.QtWidgets import QWidget, QLabel, QDialog, \
+from PyQt6.QtWidgets import QWidget, QLabel, QDialog, \
      QVBoxLayout, QHBoxLayout, QSlider, QSpinBox, QPushButton
-from PyQt5.QtGui import QPainter, QPen, QColor, QFont 
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QRectF
-from PyQt5 import sip
+from PyQt6.QtGui import QPainter, QPen, QColor, QFont 
+from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
+from PyQt6 import sip
 from ..widgets import get_icon
 
 __all__ = 'PANEL_NAME', 'spawn', 'get_icon'

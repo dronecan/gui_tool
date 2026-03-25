@@ -12,10 +12,10 @@ import os
 from functools import partial
 import dronecan
 from dronecan.driver import CANFrame
-from PyQt5.QtWidgets import QMainWindow, QHeaderView, QLabel, QSplitter, QSizePolicy, QWidget, QHBoxLayout, \
+from PyQt6.QtWidgets import QMainWindow, QHeaderView, QLabel, QSplitter, QSizePolicy, QWidget, QHBoxLayout, \
     QPlainTextEdit, QDialog, QVBoxLayout, QMenu, QAction
-from PyQt5.QtGui import QColor, QIcon, QTextOption
-from PyQt5.QtCore import Qt, QTimer
+from PyQt6.QtGui import QColor, QIcon, QTextOption
+from PyQt6.QtCore import Qt, QTimer
 from pyqtgraph import PlotWidget, mkPen
 from logging import getLogger
 from .. import BasicTable, map_7bit_to_color, RealtimeLogWidget, get_monospace_font, get_icon, flash, get_app_icon, \

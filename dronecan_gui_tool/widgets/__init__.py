@@ -10,10 +10,10 @@ import os
 import re
 import queue
 import importlib.resources
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QApplication, QWidget, \
+from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QApplication, QWidget, \
     QComboBox, QCompleter, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox, QLineEdit
-from PyQt5.QtCore import Qt, QTimer, QStringListModel
-from PyQt5.QtGui import QColor, QKeySequence, QFont, QFontInfo, QIcon
+from PyQt6.QtCore import Qt, QTimer, QStringListModel
+from PyQt6.QtGui import QColor, QKeySequence, QFont, QFontInfo, QIcon
 from logging import getLogger
 import qtawesome
 from functools import partial

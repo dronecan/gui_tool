@@ -6,7 +6,7 @@
 # Author: Pavel Kirienko <pavel.kirienko@zubax.com>
 #
 
-from PyQt5.QtWidgets import QProgressDialog, QMessageBox
+from PyQt6.QtWidgets import QProgressDialog, QMessageBox
 from . import slcan_cli
 
 

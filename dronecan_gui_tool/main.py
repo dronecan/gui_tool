@@ -79,9 +79,9 @@ from serial import SerialException
 
 import dronecan
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QSplitter, QAction
-from PyQt5.QtGui import QKeySequence, QDesktopServices
-from PyQt5.QtCore import QTimer, Qt, QUrl
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QSplitter, QAction
+from PyQt6.QtGui import QKeySequence, QDesktopServices
+from PyQt6.QtCore import QTimer, Qt, QUrl
 
 from .setup_window import run_setup_window
 from .active_data_type_detector import ActiveDataTypeDetector

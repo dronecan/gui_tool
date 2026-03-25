@@ -9,10 +9,10 @@
 import dronecan
 from ..version import __version__
 from . import get_icon, get_app_icon
-from PyQt5.QtWidgets import QDialog, QTableWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
+from PyQt6.QtWidgets import QDialog, QTableWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QTableWidgetItem, QHeaderView
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt, PYQT_VERSION_STR, QSize
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, PYQT_VERSION_STR, QSize
 
 
 ABOUT_TEXT = ('''
@@ -41,7 +41,7 @@ def _list_3rd_party():
 
     return [
         ('PyDroneCAN',  dronecan.__version__,   'MIT',      'http://dronecan.org/Implementations/Pydronecan'),
-        ('PyQt5',       PYQT_VERSION_STR,       'GPLv3',    'https://www.riverbankcomputing.com/software/pyqt/intro'),
+        ('PyQt6',       PYQT_VERSION_STR,       'GPLv3',    'https://www.riverbankcomputing.com/software/pyqt/intro'),
         ('PyQtGraph',   pyqtgraph.__version__,  'MIT',      'http://www.pyqtgraph.org/'),
         ('QtAwesome',   qtawesome.__version__,  'MIT',      'https://github.com/spyder-ide/qtawesome'),
         ('QtConsole',   qtconsole_version,      'BSD',      'http://jupyter.org'),

@@ -10,10 +10,10 @@ import dronecan
 import os
 import datetime
 from functools import partial
-from PyQt5.QtWidgets import QDialog, QGridLayout, QLabel, QLineEdit, QGroupBox, QVBoxLayout, QHBoxLayout, QStatusBar,\
+from PyQt6.QtWidgets import QDialog, QGridLayout, QLabel, QLineEdit, QGroupBox, QVBoxLayout, QHBoxLayout, QStatusBar,\
     QHeaderView, QSpinBox, QCheckBox, QFileDialog, QApplication, QPlainTextEdit
-from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtGui import QPalette
+from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtGui import QPalette
 from logging import getLogger
 from . import get_monospace_font, make_icon_button, BasicTable, show_error, request_confirmation
 from .node_monitor import node_health_to_color, node_mode_to_color
