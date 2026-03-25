@@ -14,13 +14,14 @@ import copy
 from .widgets import show_error, get_monospace_font, directory_selection
 from PyQt5.QtWidgets import QComboBox, QCompleter, QDialog, QDirModel, QFileDialog, QGroupBox, QHBoxLayout, QLabel, \
     QLineEdit, QPushButton, QSpinBox, QVBoxLayout, QGridLayout, QCheckBox, QWidget
-from qtwidgets import PasswordEdit
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIntValidator
 from logging import getLogger
 from collections import OrderedDict
 from itertools import count
 import re
+
+from .widgets import PasswordEdit
 
 
 STANDARD_BAUD_RATES = 9600, 115200, 460800, 921600, 1000000, 3000000

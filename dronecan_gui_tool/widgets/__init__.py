@@ -11,7 +11,7 @@ import re
 import queue
 import importlib.resources
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QApplication, QWidget, \
-    QComboBox, QCompleter, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox
+    QComboBox, QCompleter, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox, QLineEdit
 from PyQt5.QtCore import Qt, QTimer, QStringListModel
 from PyQt5.QtGui import QColor, QKeySequence, QFont, QFontInfo, QIcon
 from logging import getLogger
@@ -586,6 +586,48 @@ class RealtimeLogWidget(QWidget):
     def custom_area_layout(self):
         return self._custom_area_layout
 
+class PasswordEdit(QLineEdit):
+    """Standalone Password Entry Widget with an optional visibility toggle"""
+
+    def __init__(self, parent=None, show_visibility_toggle=True):
+        super().__init__(parent)
+
+        # Set Icons
+        self._icon_password_show = QIcon(get_icon("fa6.eye"))
+        self._icon_password_hide = QIcon(get_icon("fa6.eye-slash"))
+
+        # Set Initial State
+        self.setEchoMode(QLineEdit.EchoMode.Password)
+        self._visible = False
+
+        # Setup Toggle Action
+        if show_visibility_toggle:
+            self.toggle_action = self.addAction(
+                self._icon_password_show,
+                QLineEdit.ActionPosition.TrailingPosition
+            )
+            self.toggle_action.triggered.connect(self.on_toggle_password_Action)
+
+    def _update_icon(self):
+        """Update the icon based on the visibility state"""
+        # Password is hidden by default, so default the password to the show action
+        icon = self._icon_password_show
+
+        if self._visible:
+            # If the password is visible, set the icon to the hide icon
+            icon = self._icon_password_hide
+
+        # Set the icon
+        self.toggle_action.setIcon(icon)
+
+    def on_toggle_password_Action(self):
+        """Action for toggling the visibility state"""
+        self._visible = not self._visible
+        if self._visible:
+            self.setEchoMode(QLineEdit.EchoMode.Normal)
+        else:
+            self.setEchoMode(QLineEdit.EchoMode.Password)
+        self._update_icon()
 
 def get_icon(name):
     return qtawesome.icon(name)

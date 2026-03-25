@@ -56,7 +56,6 @@ args = dict(
         'pygments',
         'qtpy',
         'pyqtgraph',
-        'qtwidgets',
         'intelhex'
     ],
     # We can't use "scripts" here, because generated shims don't work with multiprocessing pickler.
