@@ -79,8 +79,8 @@ from serial import SerialException
 
 import dronecan
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QSplitter, QAction
-from PyQt6.QtGui import QKeySequence, QDesktopServices
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QSplitter
+from PyQt6.QtGui import QKeySequence, QDesktopServices, QAction
 from PyQt6.QtCore import QTimer, Qt, QUrl
 
 from .setup_window import run_setup_window

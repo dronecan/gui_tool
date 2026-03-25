@@ -13,8 +13,8 @@ from functools import partial
 import dronecan
 from dronecan.driver import CANFrame
 from PyQt6.QtWidgets import QMainWindow, QHeaderView, QLabel, QSplitter, QSizePolicy, QWidget, QHBoxLayout, \
-    QPlainTextEdit, QDialog, QVBoxLayout, QMenu, QAction
-from PyQt6.QtGui import QColor, QIcon, QTextOption
+    QPlainTextEdit, QDialog, QVBoxLayout, QMenu
+from PyQt6.QtGui import QColor, QIcon, QTextOption, QAction
 from PyQt6.QtCore import Qt, QTimer
 from pyqtgraph import PlotWidget, mkPen
 from logging import getLogger
