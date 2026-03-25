@@ -8,8 +8,9 @@
 
 import dronecan
 from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QHeaderView, QPushButton, QFileDialog, \
-    QCompleter, QDirModel
-from PyQt6.QtCore import QTimer
+    QCompleter
+from PyQt6.QtCore import QTimer, QDir
+from PyQt6.QtGui import QFileSystemModel
 from logging import getLogger
 from . import BasicTable, get_monospace_font, get_icon, show_error, CommitableComboBoxWithHistory, make_icon_button
 
@@ -62,7 +63,9 @@ class DynamicNodeIDAllocatorWidget(QGroupBox):
                                                       on_clicked=self._on_select_database_file)
 
         db_file_completer = QCompleter()
-        db_file_completer.setModel(QDirModel(db_file_completer))
+        model = QFileSystemModel(db_file_completer)
+        model.setRootPath(QDir.rootPath())
+        db_file_completer.setModel(model)
         self._database_file.setCompleter(db_file_completer)
 
         self._sync_gui()
