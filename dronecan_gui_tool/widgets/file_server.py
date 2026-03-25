@@ -13,8 +13,9 @@ import json
 import zlib
 import base64
 import struct
-from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QWidget, QDirModel, QCompleter, QFileDialog, QLabel
-from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QWidget, QCompleter, QFileDialog, QLabel
+from PyQt6.QtCore import QTimer, QDir
+from PyQt6.QtGui import QFileSystemModel
 from logging import getLogger
 from . import make_icon_button, CommitableComboBoxWithHistory, get_icon, flash, LabelWithIcon
 
@@ -42,7 +43,9 @@ class PathItem(QWidget):
                                                on_clicked=lambda: self.on_remove(self))
 
         completer = QCompleter(self)
-        completer.setModel(QDirModel(completer))
+        model = QFileSystemModel(completer)
+        model.setRootPath(QDir.rootPath())
+        completer.setModel(model)
 
         self._path_bar = CommitableComboBoxWithHistory(self)
         if default:
