@@ -7,8 +7,8 @@
 #
 
 import logging
-from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QHBoxLayout, QWidget, QLabel
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QDockWidget, QVBoxLayout, QHBoxLayout, QWidget, QLabel
+from PyQt6.QtCore import Qt
 from .. import make_icon_button
 from .value_extractor_views import NewValueExtractorWindow, ExtractorWidget
 

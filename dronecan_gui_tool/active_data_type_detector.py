@@ -8,7 +8,7 @@
 
 import logging
 import dronecan
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject
 
 
 logger = logging.getLogger(__name__)

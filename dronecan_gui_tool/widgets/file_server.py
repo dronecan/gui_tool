@@ -13,8 +13,8 @@ import json
 import zlib
 import base64
 import struct
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QWidget, QDirModel, QCompleter, QFileDialog, QLabel
-from PyQt5.QtCore import QTimer
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QWidget, QDirModel, QCompleter, QFileDialog, QLabel
+from PyQt6.QtCore import QTimer
 from logging import getLogger
 from . import make_icon_button, CommitableComboBoxWithHistory, get_icon, flash, LabelWithIcon
 

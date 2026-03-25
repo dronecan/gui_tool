@@ -8,8 +8,8 @@
 
 import sys
 import logging
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QCheckBox
-from PyQt5.QtCore import QTimer, Qt
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QCheckBox
+from PyQt6.QtCore import QTimer, Qt
 
 logger = logging.getLogger(__name__)
 

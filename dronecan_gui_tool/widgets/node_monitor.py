@@ -9,8 +9,8 @@
 import datetime
 import dronecan
 from . import BasicTable, get_monospace_font
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHeaderView, QLabel
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QHeaderView, QLabel
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from logging import getLogger
 
 

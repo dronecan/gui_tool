@@ -2,8 +2,8 @@
  a table display widget that takes a key to detemine table row
 '''
 import dronecan
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
-from PyQt5.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
+from PyQt6.QtCore import Qt, QTimer
 import time
 
 
