@@ -149,7 +149,7 @@ class AdapterSettingsWidget(QGroupBox):
             self._filtering.setTristate(False)
             filter_list = node.can_driver.get_filter_list()
             if filter_list is not None and len(filter_list) > 0:
-                self._filtering.setCheckState(2)
+                self._filtering.setChecked(True)
             self._filtering.stateChanged.connect(self.change_filtering)
 
         layout = QHBoxLayout(self)

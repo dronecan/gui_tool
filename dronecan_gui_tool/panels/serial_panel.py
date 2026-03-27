@@ -486,7 +486,7 @@ class serialPanel(QDialog):
 
     def handle_ublox_data_out(self, buf):
         '''handle ublox data from the GPS'''
-        if not self.ublox_handling.checkState():
+        if not self.ublox_handling.isChecked():
             self.ublox_msg_out = None
             return
         if self.ublox_msg_out is None:
@@ -565,7 +565,7 @@ class serialPanel(QDialog):
 
             if buf is None or len(buf) == 0:
                 break
-            if self.ublox_handling.checkState():
+            if self.ublox_handling.isChecked():
                 # we will send the data on packet boundaries
                 self.handle_ublox_data_in(buf)
             else:
