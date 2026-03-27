@@ -274,7 +274,7 @@ def run_setup_window(icon, dsdl_path=None, config_baudrate=DEFAULT_BAUD_RATE, co
         kwargs['baudrate'] = baud_rate_value
         kwargs['bitrate'] = int(bitrate.value())
         kwargs['bus_number'] = int(bus_number.value())
-        kwargs['filtered'] = filtered.checkState()
+        kwargs['filtered'] = filtered.isChecked()
         kwargs['mavlink_source_system'] = int(source_system.value())
         kwargs['mavlink_target_system'] = int(target_system.value())
         kwargs['mavlink_signing_key'] = signing_key.text()
