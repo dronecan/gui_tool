@@ -19,7 +19,7 @@ Read installation instructions:
 
 The general approach is simple:
 
-1. Install PyQt5 for Python 3 using your OS' package manager (e.g. APT).
+1. Install PyQt6 for Python 3 using your OS' package manager (e.g. APT).
 2. Install the application itself from Git via PIP:
 `pip3 install git+https://github.com/DroneCAN/gui_tool@master`
 (it is not necessary to clone this repository manually).
@@ -39,7 +39,7 @@ but it may come in handy when using the embedded IPython console.
 
 ```bash
 sudo apt-get install -y python3-pip python3-setuptools python3-wheel
-sudo apt-get install -y python3-numpy python3-pyqt5 python3-pyqt5.qtsvg git-core
+sudo apt-get install -y python3-numpy python3-pyqt6 python3-pyqt6.qtsvg git-core
 python3 -m pip install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
@@ -58,7 +58,7 @@ If you're still unable to install the package, please open a ticket.
 
 #### Fedora 29+
 ```bash
-sudo dnf install python3-PyQt5
+sudo dnf install python3-PyQt6
 python3 -m pip install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
@@ -87,7 +87,7 @@ as these ports are supported much better at the moment.
 ```bash
 brew install python3
 brew postinstall python3
-pip3 install PyQt5
+pip3 install PyQt6
 pip3 install git+https://github.com/DroneCAN/gui_tool@master
 dronecan_gui_tool
 ```
@@ -100,7 +100,7 @@ If you're prompted to install Command Line Developer Tools, agree.
 
 ```bash
 sudo port selfupdate
-sudo port install curl-ca-bundle py35-pip py35-pyqt5 py35-numpy
+sudo port install curl-ca-bundle py35-pip py35-pyqt6 py35-numpy
 python3.5 -m pip install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
