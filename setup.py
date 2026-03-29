@@ -49,7 +49,7 @@ args = dict(
         'easywebdav>=1.2',
         'pymonocypher',
         'numpy',
-        'pyqt5',
+        'pyqt6',
         'traitlets',
         'jupyter-client',
         'ipykernel',
