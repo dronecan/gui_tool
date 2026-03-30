@@ -83,6 +83,7 @@ if multiprocessing.get_start_method(True) != 'spawn':
 #
 # Importing other stuff once the logging has been configured
 #
+from pathlib import Path
 from serial import SerialException
 
 import dronecan
@@ -112,6 +113,14 @@ from .widgets.can_adapter_control_panel import spawn_window as spawn_can_adapter
 
 from .panels import PANELS
 from .panels import import_panel
+
+# Add the User ~/dronecan_gui_tool/plugins folder to the import path,
+# allowing for custom plugin modules to be loaded from there.
+plugins_dir = Path.home() / "dronecan_gui_tool" / "plugins"
+if plugins_dir.exists():
+    str_plugin_dir = str(plugins_dir)
+    if str_plugin_dir not in sys.path:
+        sys.path.insert(0, str_plugin_dir)
 
 EXT_PLUGINS = []
 modules = args.load_module[0] if args.load_module else []
