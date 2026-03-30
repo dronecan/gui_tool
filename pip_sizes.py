@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-import importlib
+import importlib.metadata
 
 def calc_container(path):
     total_size = 0
