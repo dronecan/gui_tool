@@ -71,6 +71,28 @@ In order to install this application,
 
 Please see the file winbuild.bat in this directory, or use the MSI file build by github actions on any commit
 
+### USB2CAN (8devices Korlan) Support on Windows
+
+The DroneCAN GUI Tool now includes support for 8devices USB2CAN (Korlan) adapters on Windows.
+
+**Setup:**
+1. Connect your 8devices USB2CAN adapter
+2. Run the setup script to install the required DLL:
+   ```
+   python setup_usb2can.py
+   ```
+3. The USB2CAN adapter will now appear in the interface selection dropdown as "8devices USB2CAN (channel_id)"
+
+**Features:**
+- Automatic detection of USB2CAN adapters
+- Native integration with DroneCAN protocol
+- Full support for all GUI tool features
+
+**Requirements:**
+- 8devices USB2CAN adapter (Korlan)
+- Windows 10/11 (x64 or x86)
+- DLL files included in `bin/usb2can_canal_v2.0.0/`
+
 ## Installing on macOS
 
 OSX support is a bit lacking in the way that installation doesn't create an entry in the applications menu,
