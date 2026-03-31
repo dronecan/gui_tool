@@ -591,6 +591,9 @@ def main():
     logger.info('Starting the application')
     app = QApplication(sys.argv)
 
+    # Set the style for Qt6 to be same across systems
+    app.setStyle("Fusion")
+
     while True:
         # Asking the user to specify which interface to work with
         try:
