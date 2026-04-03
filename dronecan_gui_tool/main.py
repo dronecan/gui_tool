@@ -69,7 +69,7 @@ os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.dirname(sys.executable) 
 # Start method must be configured globally, and only once. Using 'spawn' ensures full compatibility with Windoze.
 # We need to check first if the start mode is already configured, because this code will be re-run for every child.
 #
-if multiprocessing.get_start_method(True) != 'spawn':
+if multiprocessing.get_start_method(allow_none=True) is None:
     multiprocessing.set_start_method('spawn')
 
 #
