@@ -15,6 +15,12 @@ import tempfile
 
 assert sys.version[0] == '3'
 
+def parse_load_modules(argv):
+    modules = [m.strip() for m in argv.split(",") if m.strip()]
+    if not modules:
+        return None
+    return modules
+
 from argparse import ArgumentParser
 parser = ArgumentParser(description='DroneCAN GUI tool')
 
@@ -29,6 +35,8 @@ parser.add_argument("--bus", help="set the CAN Bus number", type=int, default=1)
 parser.add_argument("--filtered", action='store_true', help="enable filtering of DroneCAN traffic")
 parser.add_argument("--target-system", help="set the targetted system", type=int, default=0)
 parser.add_argument("--source-system", help="set the source system", type=int, default=250)
+
+parser.add_argument("--load-module", type=parse_load_modules, nargs=1,  help="Comma-separated list of modules to load (e.g. mod1,mod2).") # exactly one argument required if flag is present
 
 args = parser.parse_args()
 
@@ -75,6 +83,7 @@ if multiprocessing.get_start_method(True) != 'spawn':
 #
 # Importing other stuff once the logging has been configured
 #
+from pathlib import Path
 from serial import SerialException
 
 import dronecan
@@ -103,7 +112,26 @@ from .widgets.about_window import AboutWindow
 from .widgets.can_adapter_control_panel import spawn_window as spawn_can_adapter_control_panel
 
 from .panels import PANELS
+from .panels import import_panel
 
+# Add the User ~/dronecan_gui_tool/plugins folder to the import path,
+# allowing for custom plugin modules to be loaded from there.
+plugins_dir = Path.home() / "dronecan_gui_tool" / "plugins"
+if plugins_dir.exists():
+    str_plugin_dir = str(plugins_dir)
+    if str_plugin_dir not in sys.path:
+        sys.path.insert(0, str_plugin_dir)
+
+EXT_PLUGINS = []
+modules = args.load_module[0] if args.load_module else []
+if len(modules) > 0:
+    for module in modules:
+        try:
+            panel = import_panel(module)
+            EXT_PLUGINS.append(panel)
+        except Exception as ex:
+            print(f"Unable to load {module}: {ex}")
+    print(f"Loaded {len(EXT_PLUGINS)} plugin modules!")
 
 NODE_NAME = 'org.dronecan.gui_tool'
 
@@ -211,6 +239,39 @@ class MainWindow(QMainWindow):
                 action.setShortcut(QKeySequence('Ctrl+Shift+%d' % (idx + 1)))
             action.triggered.connect(lambda state, panel=panel: panel.safe_spawn(self, self._node))
             panels_menu.addAction(action)
+
+        #
+        # External Modules menu
+        #
+        def get_or_create_submenu(parent_menu, menu_name):
+            """
+            Find a submenu with menu_name under parent_menu, or create it if not found.
+            """
+            for action in parent_menu.actions():
+                submenu = action.menu()
+                if submenu and submenu.title() == menu_name:
+                    return submenu
+            # Not found, create new submenu
+            return parent_menu.addMenu(menu_name)
+
+        if len(EXT_PLUGINS) > 0:
+            extern_modules_menu = self.menuBar().addMenu('P&lugins')
+            for idx, panel in enumerate(EXT_PLUGINS):
+                menu_path = getattr(panel, "menu_path", "")
+                path_parts = [p for p in menu_path.split("/") if p]
+
+                current_menu = extern_modules_menu
+                for part in path_parts:
+                    current_menu = get_or_create_submenu(current_menu, part)
+
+                action = QAction(panel.name, self)
+                icon = panel.get_icon()
+                if icon:
+                    action.setIcon(icon)
+                if idx < 9:
+                    action.setShortcut(QKeySequence(f'Ctrl+Shift+[,{(idx + 1)}'))
+                action.triggered.connect(lambda state, panel=panel: panel.safe_spawn(self, self._node))
+                current_menu.addAction(action)
 
         #
         # Help menu
