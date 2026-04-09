@@ -70,6 +70,11 @@ from serial import SerialException
 
 import dronecan
 
+# Ensure can.__version__ is defined (cx_Freeze builds lack importlib.metadata)
+import can
+if not hasattr(can, '__version__'):
+    can.__version__ = '4.0.0'
+
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QSplitter, QAction
 from PyQt5.QtGui import QKeySequence, QDesktopServices
 from PyQt5.QtCore import QTimer, Qt, QUrl
@@ -642,8 +647,14 @@ def main():
                     iface_kwargs['bustype'] = 'usb2can'
                     
                     # Determine the correct DLL path based on architecture
-                    current_dir = os.path.dirname(os.path.abspath(__file__))
-                    gui_tool_dir = os.path.dirname(current_dir)  
+                    # Handle both development environment and frozen executable
+                    if getattr(sys, 'frozen', False):
+                        # Running as cx_Freeze executable
+                        gui_tool_dir = os.path.dirname(sys.executable)
+                    else:
+                        # Running in development environment
+                        current_dir = os.path.dirname(os.path.abspath(__file__))
+                        gui_tool_dir = os.path.dirname(current_dir)  
                     
                     if platform.machine().lower() in ['amd64', 'x86_64', 'x64']:
                         dll_path = os.path.join(gui_tool_dir, 'bin', 'usb2can_canal_v2.0.0', 'x64', 'Release', 'usb2can.dll')
@@ -651,7 +662,16 @@ def main():
                         dll_path = os.path.join(gui_tool_dir, 'bin', 'usb2can_canal_v2.0.0', 'x86', 'Release', 'usb2can.dll')
                     
                     iface_kwargs['dll'] = dll_path
-                    logger.info('Using USB2CAN interface: channel=%s, dll=%s', channel, dll_path)
+                    
+                    # Add the DLL directory to the system PATH and DLL search directories
+                    # so that python-can's usb2can backend can find usb2can.dll by name
+                    dll_dir = os.path.dirname(dll_path)
+                    if dll_dir not in os.environ.get('PATH', ''):
+                        os.environ['PATH'] = dll_dir + ';' + os.environ.get('PATH', '')
+                    if hasattr(os, 'add_dll_directory'):
+                        os.add_dll_directory(dll_dir)
+                    
+                    logger.info('Using USB2CAN interface: channel=%s, dll=%s (frozen=%s)', channel, dll_path, getattr(sys, 'frozen', False))
                 elif bustype == 'pcan':
                     # PCAN interfaces should also specify bustype
                     actual_iface = channel
@@ -662,6 +682,18 @@ def main():
                                     node_info=node_info,
                                     mode=dronecan.uavcan.protocol.NodeStatus().MODE_OPERATIONAL,
                                     **iface_kwargs)
+
+            # Monkey-patch flush_tx_buffer for bus drivers that don't implement it
+            # (e.g. usb2can). The dronecan PythonCAN writer thread calls flush_tx_buffer()
+            # after every send, but not all python-can backends provide it.
+            try:
+                can_bus = node._can_driver._bus
+                can_bus.flush_tx_buffer()
+            except NotImplementedError:
+                can_bus.flush_tx_buffer = lambda: None
+                logger.info('Patched flush_tx_buffer for %s backend', type(can_bus).__name__)
+            except AttributeError:
+                pass
 
             if iface_kwargs["filtered"]:
                 setup_filtering(node)

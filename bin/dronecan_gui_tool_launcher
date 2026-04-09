@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+#
+# Copyright (C) 2016  UAVCAN Development Team  <uavcan.org>
+#
+# This software is distributed under the terms of the MIT License.
+#
+# Author: Pavel Kirienko <pavel.kirienko@zubax.com>
+#
+
+import os
+import sys
+import multiprocessing
+
+#
+# When frozen, stdout/stderr are None, causing nasty exceptions. This workaround silences them.
+#
+class SupermassiveBlackHole:
+    def write(self, *_):
+        pass
+
+    def read(self, *_):
+        pass
+
+    def flush(self):
+        pass
+
+    def close(self):
+        pass
+
+try:
+    sys.stdout.flush()
+    sys.stderr.flush()
+except AttributeError:
+    sys.__stdout__ = sys.stdout = SupermassiveBlackHole()
+    sys.__stderr__ = sys.stderr = SupermassiveBlackHole()
+    sys.__stdin__  = sys.stdin  = SupermassiveBlackHole()
+
+#
+# Calling main directly.
+# The 'if' wrapper is absolutely needed because we're spawning new processes with 'multiprocessing'; refer
+# to the Python docs for more info.
+#
+if __name__ == '__main__':
+    multiprocessing.freeze_support()
+    
+    # Import and run main - avoid relative imports by running as absolute import
+    import dronecan_gui_tool.main
+    dronecan_gui_tool.main.main()

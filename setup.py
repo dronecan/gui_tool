@@ -111,7 +111,7 @@ if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
 # Windows-specific options and hacks
 #
 if os.name == 'nt':
-    args.setdefault('install_requires', []).append('cx_Freeze >= 6.1')
+    args.setdefault('install_requires', []).append('cx_Freeze ~= 6.1')
 
 if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
     import cx_Freeze
@@ -163,37 +163,17 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
                 'can',
                 'can.interfaces',
                 'can.interfaces.usb2can',
-                # Add only the most critical missing modules
-                'traceback',
-                'token',
-                'threading',
-                'queue',
-                'logging',
-                'json',
-                'urllib',
-                'socket',
-                'ssl',
-                'datetime',
-                'multiprocessing',
-                'subprocess',
-                'tempfile',
-                'shutil',
-                'glob',
-                'pathlib',
-                'io',
-                'platform',
-                'importlib',
-                'encodings',
-                'enum',
-                'contextlib',
-                'configparser',
-                'winreg',
-                'msvcrt',
-                'email',
-                'csv',
-                'xml',
-                'zlib',
-                'zipfile',
+                'can.interfaces.usb2can.usb2canabstractionlayer',
+                'can.interfaces.usb2can.usb2canInterface',
+                'can.interfaces.usb2can.serial_selector',
+                'can.interfaces.serial',
+                'can.interfaces.pcan',
+                'can.interfaces.vector',
+                'can.interfaces.kvaser',
+                'can.interfaces.ixxat',
+                'can.interfaces.socketcan',
+                'can.interfaces.socketcand',
+                'can.interfaces.virtual',
             ],
             'include_msvcr': True,
             'include_files': [
@@ -210,6 +190,11 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
                 os.path.join(unpacked_eggs_dir, os.path.dirname(traitlets.__file__)),
                 os.path.join(unpacked_eggs_dir, os.path.dirname(numpy.__file__)),
                 os.path.join(unpacked_eggs_dir, os.path.dirname(can.__file__)),  # Include python-can package files
+                # Explicitly include USB2CAN interface files
+                (os.path.join(unpacked_eggs_dir, os.path.dirname(can.__file__), 'interfaces', 'usb2can'), 
+                 'can/interfaces/usb2can'),
+                # Include USB2CAN DLL files
+                ('bin/usb2can_canal_v2.0.0', 'bin/usb2can_canal_v2.0.0'),
             ] + missing_dlls,
         },
         'bdist_msi': {
@@ -218,8 +203,9 @@ if ('bdist_msi' in sys.argv) or ('build_exe' in sys.argv):
         },
     }
     args['executables'] = [
-        cx_Freeze.Executable(os.path.join('bin', PACKAGE_NAME),
+        cx_Freeze.Executable(os.path.join('bin', PACKAGE_NAME + '_launcher'),
                              base='Win32GUI',
+                             target_name=PACKAGE_NAME + '.exe',
                              icon='icons/logo.ico',
                              shortcut_name=HUMAN_FRIENDLY_NAME,
                              shortcut_dir='ProgramMenuFolder'),
