@@ -9,7 +9,7 @@
 import dronecan
 from functools import partial
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, QSlider, QSpinBox, QDoubleSpinBox, QCheckBox, \
-    QPlainTextEdit
+    QPlainTextEdit, QComboBox
 from PyQt6.QtCore import QTimer, Qt
 from logging import getLogger
 from ..widgets import make_icon_button, get_icon, get_monospace_font
@@ -36,6 +36,9 @@ class PercentSlider(QWidget):
         self._slider.setTickInterval(1000)
         self._slider.setTickPosition(QSlider.TicksBothSides)
         self._slider.valueChanged.connect(lambda: self._spinbox.setValue(self._slider.value()/1000.0))
+        sp = self._slider.sizePolicy()
+        sp.setRetainSizeWhenHidden(True)
+        self._slider.setSizePolicy(sp)
 
         self._spinbox = QDoubleSpinBox(self)
         self._spinbox.setMinimum(-1)
@@ -56,6 +59,11 @@ class PercentSlider(QWidget):
         self._enabled = QCheckBox('Enabled', self)
         self._enabled.setGeometry(0, 0, 10, 10)
 
+        self._command_type = QComboBox(self)
+        for label, value in (('UNITLESS', 0), ('POSITION', 1), ('FORCE', 2), ('SPEED', 3), ('PWM', 4)):
+            self._command_type.addItem(label, value)
+        self._command_type.currentIndexChanged.connect(self._on_command_type_changed)
+
         layout = QVBoxLayout(self)
         sub_layout = QHBoxLayout(self)
         sub_layout.addStretch()
@@ -65,6 +73,7 @@ class PercentSlider(QWidget):
         layout.addWidget(self._spinbox)
         layout.addWidget(self._zero_button)
         layout.addWidget(self._actuator_id)
+        layout.addWidget(self._command_type)
         layout.addWidget(self._enabled)
         self.setLayout(layout)
 
@@ -81,6 +90,25 @@ class PercentSlider(QWidget):
 
     def is_enabled(self):
         return self._enabled.isChecked()
+
+    def get_command_type(self):
+        return self._command_type.currentData()
+
+    def _on_command_type_changed(self):
+        is_unitless = self._command_type.currentData() == 0
+        self._slider.setEnabled(is_unitless)
+        self._slider.setVisible(is_unitless)
+        self._zero_button.setEnabled(is_unitless)
+        if is_unitless:
+            self._spinbox.setMinimum(-1)
+            self._spinbox.setMaximum(1)
+            self._spinbox.setDecimals(3)
+            self._spinbox.setSingleStep(0.001)
+        else:
+            self._spinbox.setDecimals(3)
+            self._spinbox.setMinimum(-1e6)
+            self._spinbox.setMaximum(1e6)
+            self._spinbox.setSingleStep(1)
 
 
 class ActuatorPanel(QDialog):
@@ -161,7 +189,7 @@ class ActuatorPanel(QDialog):
                     msg_cmd = dronecan.uavcan.equipment.actuator.Command()
                     msg_cmd.actuator_id = sl.get_actuator_id()
                     msg_cmd.command_value = sl.get_value()
-                    msg_cmd.command_type = 0
+                    msg_cmd.command_type = sl.get_command_type()
                     msg.commands.append(msg_cmd)
 
                 self._node.broadcast(msg)
