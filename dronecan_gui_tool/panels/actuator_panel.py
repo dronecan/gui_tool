@@ -52,7 +52,7 @@ class PercentSlider(QWidget):
 
         self._actuator_id = QSpinBox(self)
         self._actuator_id.setMinimum(0)
-        self._actuator_id.setMaximum(15)
+        self._actuator_id.setMaximum(255)
         self._actuator_id.setValue(0)
         self._actuator_id.setPrefix('ID: ')
 
