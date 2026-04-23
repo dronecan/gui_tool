@@ -57,6 +57,9 @@ def _process_entry_point(channel):
     logger.info('Plotter process started with PID %r', os.getpid())
     app = QApplication(sys.argv)    # Inheriting args from the parent process
 
+    # Set the style for Qt6 to be same across systems
+    app.setStyle("Fusion")
+
     def exit_if_should():
         if RUNNING_ON_WINDOWS:
             return False
