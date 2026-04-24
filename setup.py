@@ -89,7 +89,7 @@ args = dict(
     package_data={'DroneCAN_GUI_Tool': [ 'icons/*.png', 'icons/*.ico']}
 )
 
-if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
+if 'install' in sys.argv and (sys.platform.startswith('linux') or sys.platform.startswith('darwin')):
     # Delegating the desktop integration work to 'install_freedesktop'
     args.setdefault('setup_requires', []).append('install_freedesktop')
 
