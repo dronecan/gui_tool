@@ -19,6 +19,7 @@ from . import get_monospace_font, make_icon_button, BasicTable, show_error, requ
 from .node_monitor import node_health_to_color, node_mode_to_color
 from .file_server import FileServer_PathKey
 from ..am32_rtttl import AM32_Rtttl
+from typing import Optional
 
 
 logger = getLogger(__name__)
@@ -26,6 +27,13 @@ logger = getLogger(__name__)
 
 REQUEST_PRIORITY = 30
 
+class ConfigParamEntry:
+    def __init__(self, index, response):
+        self._index = index
+        self._value = response.value
+        self._name = response.name
+        self._response = response;
+        self._sync=True
 
 class FieldValueWidget(QLineEdit):
     def __init__(self, parent, initial_value=None):
@@ -656,7 +664,7 @@ class ConfigParams(QGroupBox):
             else:
                 self._table.item(index, self.VALUE_COLUMN).setText(str(value))
 
-        win = ConfigParamEditWindow(self, self._node, self._target_node_id, self._params[index], update_callback)
+        win = ConfigParamEditWindow(self, self._node, self._target_node_id, self._params[index]._response, update_callback)
         win.show()
 
     def _on_fetch_response(self, index, e):
@@ -679,14 +687,17 @@ class ConfigParams(QGroupBox):
             self.window().show_message('%d params fetched successfully', index)
             return
 
-        self._params.append(e.response)
+        # create a parameter structure including the index from the response
+        param = ConfigParamEntry(index, e.response)
+
+        self._params.append(param)
         self._table.setRowCount(self._table.rowCount() + 1)
         self._table.set_row(self._table.rowCount() - 1, (index, e.response))
 
         try:
             index += 1
             self.window().show_message('Requesting index %d', index)
-            self._node.defer(0.1, lambda: self._node.request(dronecan.uavcan.protocol.param.GetSet.Request(index=index),
+            self._node.defer(0.01, lambda: self._node.request(dronecan.uavcan.protocol.param.GetSet.Request(index=index),
                                                              self._target_node_id,
                                                              partial(self._on_fetch_response, index),
                                                              priority=REQUEST_PRIORITY))
@@ -740,9 +751,9 @@ class ConfigParams(QGroupBox):
         print("save to file", param_file)
         f = open(param_file, "w")
         for p in self._params:
-            value = p.value
-            name = p.name
-            value_string = self.param_as_string(value, AM32_Rtttl.is_am32_melody_param(p))
+            value = p._value
+            name = p._name
+            value_string = self.param_as_string(value, AM32_Rtttl.is_am32_melody_param(p._response))
             if value_string:
                 f.write("%s %s\n" % (name, value_string))
         f.close()
@@ -753,12 +764,12 @@ class ConfigParams(QGroupBox):
         else:
             for i in range(len(self._params)):
                 p = self._params[i]
-                name = str(p.name)
+                name = str(p._name)
                 if name == str(e.response.name):
                     logger.info('set %s to %s' % (name, self.param_as_string(e.response.value)))
-                    self._table.item(i, self.VALUE_COLUMN).setText(self.param_as_string(e.response.value, AM32_Rtttl.is_am32_melody_param(p)))
+                    self._table.item(i, self.VALUE_COLUMN).setText(self.param_as_string(e.response.value, AM32_Rtttl.is_am32_melody_param(p._response)))
 
-    def save_param(self, name, old_value, str_value):
+    def save_param(self, name, old_value, str_value, index: Optional[int] = None, delay: Optional[float] = None):
         value_type = dronecan.get_active_union_field(old_value)
         v = old_value
 
@@ -774,8 +785,16 @@ class ConfigParams(QGroupBox):
             raise RuntimeError('bad parameter type on save')
 
         try:
-            request = dronecan.uavcan.protocol.param.GetSet.Request(name=name, value=v)
-            self._node.request(request, self._target_node_id, self._on_send_response, priority=REQUEST_PRIORITY)
+            if index is None:
+                request = dronecan.uavcan.protocol.param.GetSet.Request(name=name, value=v)
+            else:
+                request = dronecan.uavcan.protocol.param.GetSet.Request(index=index, value=v)
+
+            if delay is None:
+                self._node.request(request, self._target_node_id, self._on_send_response, priority=REQUEST_PRIORITY)
+            else:
+                self._node.defer(delay, lambda: self._node.request(request, self._target_node_id, self._on_send_response, priority=REQUEST_PRIORITY))
+
         except Exception as ex:
             show_error('Node error', 'Could not send param set request', ex, self)
 
@@ -787,11 +806,12 @@ class ConfigParams(QGroupBox):
             return
         pdict = {}
         for p in self._params:
-            pdict[str(p.name)] = p.value
+            pdict[str(p._name)] = p
 
         param_file = os.path.normcase(os.path.abspath(param_file[0]))
         print("load from file", param_file)
         f = open(param_file, "r")
+        delay = 0.0
         for line in f.readlines():
             a = line.split()
             name = a[0]
@@ -804,9 +824,10 @@ class ConfigParams(QGroupBox):
             else:
                 value = a[1]
             if name in pdict:
-                s = self.param_as_string(pdict[name])
+                s = self.param_as_string(pdict[name]._value)
                 if s != value:
-                    self.save_param(name, pdict[name], value)
+                    self.save_param(name, pdict[name]._value, value, pdict[name]._index, delay)
+                    delay += 0.02
         f.close()
 
     def _do_execute_opcode(self, opcode):
