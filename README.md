@@ -73,15 +73,23 @@ Please see the file winbuild.bat in this directory, or use the MSI file build by
 
 ## Installing on macOS
 
-OSX support is a bit lacking in the way that installation doesn't create an entry in the applications menu,
-but this issue should be fixed someday in the future.
-Other than that, everything appears to function more or less correctly.
-If you have a choice, it is recommended to use Linux or Windows instead,
-as these ports are supported much better at the moment.
+macOS has three options for installation. The first is a compiled and self-sufficient binary that can be distributed and the other two use package managers.
+
+### Installation option
+
+Download macOS_DroneCAN_install.sh
+Make it executable by navigating into the folder it is in (Downloads) and running:
+```chmod +x macOS_DroneCAN_install.sh
+./macOS_DroneCAN_install.sh
+```
+It will install the DroneCAN GUI application into your Applications folder and also give you instructions on the location of the DMG if you need it for distribution.
+
+Everything is self-sufficient. 
+
 
 ### Homebrew option
 
-* Install the Homebrew package manager for OSX.
+* Install the Homebrew package manager for macOS.
 * Run the following commands:
 
 ```bash
