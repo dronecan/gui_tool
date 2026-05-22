@@ -39,7 +39,7 @@ but it may come in handy when using the embedded IPython console.
 
 ```bash
 sudo apt-get install -y python3-pip python3-setuptools python3-wheel
-sudo apt-get install -y python3-numpy python3-pyqt6 python3-pyqt6.qtsvg git-core
+sudo apt-get install -y python3-numpy python3-pyqt6 python3-pyqt6.qtsvg pyqt6-dev-tools git-core
 python3 -m pip install git+https://github.com/DroneCAN/gui_tool@master
 ```
 
