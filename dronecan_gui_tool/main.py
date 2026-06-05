@@ -62,7 +62,7 @@ logger.info('Spawned')
 #
 # Applying Windows-specific hacks
 #
-os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.dirname(sys.executable)  # Otherwise it fails to load on Win 10
+os.environ['PATH'] = os.environ['PATH'] + os.pathsep + os.path.dirname(sys.executable)  # Otherwise it fails to load on Win 10
 
 #
 # Configuring multiprocessing.
