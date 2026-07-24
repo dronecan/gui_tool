@@ -24,7 +24,6 @@ SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
 upgrade_code = '{D5CD6E19-2545-32C7-A62A-4595B28BCDC3}'
 
 sys.path.append(os.path.join(SOURCE_DIR, PACKAGE_NAME))
-from version import __version__
 
 assert sys.version_info[0] == 3, 'Python 3 is required'
 
@@ -36,10 +35,11 @@ with open("README.md", "r", encoding = "utf-8") as fh:
 #
 args = dict(
     name=PACKAGE_NAME,
-    version='.'.join(map(str, __version__)),
+    use_scm_version={"write_to": "dronecan_gui_tool/_version_generated.py"},
     packages=find_packages(),
     install_requires=[
         'setuptools>=18.5',
+        'setuptools-scm>=6.2',
         'dronecan>=1.0.25',
         'pyserial>=3.0',
         'pymavlink>=2.4.26',
