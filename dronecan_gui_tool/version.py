@@ -9,55 +9,54 @@
 #
 #
 
+import os
+import subprocess
+import re
+
 # Note: This version is determined dynamically at build time or runtime.
 __version_tuple__ = None
 
-# Now try to import the generated version information and override the locally managed version info
+# 1. Try running git describe first (live git repository state)
 try:
-    from ._version_generated import __version_tuple__
-except ImportError:
-    import os
-    import subprocess
-    import re
 
-    # Try running git describe first
-    try:
-        git_describe = subprocess.check_output(
-            ["git", "describe", "--tags", "--long", "--dirty"],
-            stderr=subprocess.DEVNULL,
-            text=True
-        ).strip()
+    git_describe = subprocess.check_output(
+        ["git", "describe", "--tags", "--long", "--dirty"],
+        stderr=subprocess.DEVNULL,
+        text=True
+    ).strip()
+    is_dirty = git_describe.endswith("-dirty")
+    if is_dirty:
+        git_describe = git_describe[:-6] # slice off the '-dirty'
 
-        is_dirty = git_describe.endswith("-dirty")
+    # Split from the right, because the tag itself might contain hyphens (e.g., v1.0-beta)
+    parts = git_describe.rsplit("-", 2)
+
+    if len(parts) == 3:
+        base_tag = parts[0]
+        commits_since = int(parts[1])
+        sha = parts[2]
+        
+        # Parse base tag into tuple (e.g., "1.2.28" -> (1, 2, 28))
+        # Remove leading 'v' if present
+        if base_tag.startswith('v'):
+            base_tag = base_tag[1:]
+        
+        tag_parts = tuple(int(x) for x in base_tag.split('.') if x.isdigit())
+        
+        __version_tuple__ = tag_parts
+        if commits_since > 0:
+            __version_tuple__ += (f"source-post{commits_since}", sha)
         if is_dirty:
-            git_describe = git_describe[:-6] # slice off the '-dirty'
-
-        # Split from the right, because the tag itself might contain hyphens (e.g., v1.0-beta)
-        parts = git_describe.rsplit("-", 2)
-
-        if len(parts) == 3:
-            base_tag = parts[0]
-            commits_since = int(parts[1])
-            sha = parts[2]
-            
-            # Parse base tag into tuple (e.g., "1.2.28" -> (1, 2, 28))
-            # Remove leading 'v' if present
-            if base_tag.startswith('v'):
-                base_tag = base_tag[1:]
-            
-            tag_parts = tuple(int(x) for x in base_tag.split('.') if x.isdigit())
-            
-            __version_tuple__ = tag_parts
-            if commits_since > 0:
-                __version_tuple__ += (f"source-post{commits_since}", sha)
-            if is_dirty:
-                __version_tuple__ += ("dirty", )
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        # We are likely running from a downloaded GitHub archive where .git is missing.
-        # Fall back to reading .git_archival.txt
+            __version_tuple__ += ("dirty", )
+except (FileNotFoundError, subprocess.CalledProcessError):
+    # 2. Try to import the generated version information (built wheels/MSIs)
+    try:
+        from ._version_generated import __version_tuple__
+    except ImportError:
+        # 3. Fall back to reading .git_archival.txt (GitHub source ZIPs)
         __version_tuple__ = (0, 0, 0, "unknown")
         
-        archival_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.git_archival.txt')
+        archival_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".git_archival.txt")
         if os.path.isfile(archival_path):
             with open(archival_path, 'r', encoding='utf-8') as f:
                 content = f.read()
