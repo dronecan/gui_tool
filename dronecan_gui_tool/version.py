@@ -9,17 +9,19 @@
 #
 #
 
-# Note: This version is incremented after the release has been made
-__version_tuple__ = 1, 2, 28
-
+# Note: This version is determined dynamically at build time or runtime.
+__version_tuple__ = None
 
 # Now try to import the generated version information and override the locally managed version info
-
 try:
     from ._version_generated import __version_tuple__
 except ImportError:
+    import os
+    import subprocess
+    import re
+
+    # Try running git describe first
     try:
-        import subprocess
         git_describe = subprocess.check_output(
             ["git", "describe", "--tags", "--long", "--dirty"],
             stderr=subprocess.DEVNULL,
@@ -37,13 +39,69 @@ except ImportError:
             base_tag = parts[0]
             commits_since = int(parts[1])
             sha = parts[2]
-            __version_tuple__ += (f"source-dev{commits_since}", sha)
+            
+            # Parse base tag into tuple (e.g., "1.2.28" -> (1, 2, 28))
+            # Remove leading 'v' if present
+            if base_tag.startswith('v'):
+                base_tag = base_tag[1:]
+            
+            tag_parts = tuple(int(x) for x in base_tag.split('.') if x.isdigit())
+            
+            __version_tuple__ = tag_parts
+            if commits_since > 0:
+                __version_tuple__ += (f"source-post{commits_since}", sha)
             if is_dirty:
                 __version_tuple__ += ("dirty", )
     except (FileNotFoundError, subprocess.CalledProcessError):
-        # FileNotFoundError: The 'git' executable is not installed/available
-        # CalledProcessError: The command failed (e.g., not inside a git repository)
-        print("Warning: Git is not available")
-        __version_tuple__ += ("source",)
+        # We are likely running from a downloaded GitHub archive where .git is missing.
+        # Fall back to reading .git_archival.txt
+        __version_tuple__ = (0, 0, 0, "unknown")
+        
+        archival_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.git_archival.txt')
+        if os.path.isfile(archival_path):
+            with open(archival_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Extract node hash
+            node_match = re.search(r'^node:[ \t]*([a-f0-9]{40})$', content, re.MULTILINE)
+            # Extract describe-name
+            describe_match = re.search(r'^describe-name:[ \t]*(.+)$', content, re.MULTILINE)
+            # Extract ref-names
+            ref_match = re.search(r'^ref-names:[ \t]*(.+)$', content, re.MULTILINE)
+            
+            if node_match and not node_match.group(1).startswith('$'):
+                sha = 'g' + node_match.group(1)[:7]
+                base_tag = None
+                commits_since = 0
 
+                if describe_match and not describe_match.group(1).startswith('$'):
+                    describe_str = describe_match.group(1).strip()
+                    parts = describe_str.rsplit("-", 2)
 
+                    if len(parts) == 3 and parts[1].isdigit() and parts[2].startswith('g'):
+                        base_tag = parts[0]
+                        commits_since = int(parts[1])
+                    else:
+                        base_tag = describe_str
+
+                if not base_tag and ref_match and not ref_match.group(1).startswith('$'):
+                    refs = ref_match.group(1).split(', ')
+                    tags = [r[5:] for r in refs if r.startswith('tag: ')]
+                    if tags:
+                        base_tag = tags[0]
+                        
+                if base_tag:
+                    if base_tag.startswith('v'):
+                        base_tag = base_tag[1:]
+                        
+                    tag_parts = tuple(int(x) for x in base_tag.split('.') if x.isdigit())
+                    if tag_parts:
+                        __version_tuple__ = tag_parts
+                        if commits_since > 0:
+                            __version_tuple__ += (f"source-post{commits_since}", sha)
+                    else:
+                        __version_tuple__ = (0, 0, 0, "source", sha)
+                else:
+                    __version_tuple__ = (0, 0, 0, "source", sha)
+        else:
+            print("Warning: Git is not available and .git_archival.txt not found")

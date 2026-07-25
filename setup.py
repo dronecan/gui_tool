@@ -35,7 +35,10 @@ with open("README.md", "r", encoding = "utf-8") as fh:
 #
 args = dict(
     name=PACKAGE_NAME,
-    use_scm_version={"write_to": "dronecan_gui_tool/_version_generated.py"},
+    use_scm_version={
+        "write_to": "dronecan_gui_tool/_version_generated.py",
+        "version_scheme": "post-release"
+    },
     packages=find_packages(),
     install_requires=[
         'setuptools>=18.5',
