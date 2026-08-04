@@ -32,6 +32,7 @@ pyinstaller -y --name "DroneCAN_GUI_Tool" --windowed --icon icons/logo.ico \
     --collect-all dronecan \
     --collect-all dronecan_gui_tool \
     --collect-all pymavlink \
+    --collect-all debugpy \
     bin/dronecan_gui_tool
 
 echo "Setting up AppDir..."
