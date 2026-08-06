@@ -14,7 +14,7 @@ import subprocess
 import re
 
 # Note: This version is determined dynamically at build time or runtime.
-__version_tuple__ = None
+__version_tuple__ = (1, 2, 28)
 
 # 1. Try running git describe first (live git repository state)
 try:
@@ -22,8 +22,10 @@ try:
     git_describe = subprocess.check_output(
         ["git", "describe", "--tags", "--long", "--dirty"],
         stderr=subprocess.DEVNULL,
-        text=True
+        text=True,
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     ).strip()
+
     is_dirty = git_describe.endswith("-dirty")
     if is_dirty:
         git_describe = git_describe[:-6] # slice off the '-dirty'
@@ -54,7 +56,7 @@ except (FileNotFoundError, subprocess.CalledProcessError):
         from ._version_generated import __version_tuple__
     except ImportError:
         # 3. Fall back to reading .git_archival.txt (GitHub source ZIPs)
-        __version_tuple__ = (0, 0, 0, "unknown")
+        __version_tuple__ += ("unknown",)
         
         archival_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".git_archival.txt")
         if os.path.isfile(archival_path):
@@ -99,8 +101,8 @@ except (FileNotFoundError, subprocess.CalledProcessError):
                         if commits_since > 0:
                             __version_tuple__ += (f"source-post{commits_since}", sha)
                     else:
-                        __version_tuple__ = (0, 0, 0, "source", sha)
+                        __version_tuple__ += ("source", sha)
                 else:
-                    __version_tuple__ = (0, 0, 0, "source", sha)
+                    __version_tuple__ += ("source", sha)
         else:
             print("Warning: Git is not available and .git_archival.txt not found")

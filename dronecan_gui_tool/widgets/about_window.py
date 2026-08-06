@@ -20,7 +20,7 @@ from PyQt6.QtCore import Qt, PYQT_VERSION_STR, QSize
 numeric_parts = [x for x in __version_tuple__ if isinstance(x, int)]
 metadata_parts = [x for x in __version_tuple__ if isinstance(x, str)]
 is_clean_release = len(metadata_parts) == 0
-is_dirty = any(".d" in part for part in metadata_parts)
+is_dirty = any((part == "dirty") or (".d" in part) for part in metadata_parts)
 version_info = '.'.join(map(str, numeric_parts))
 metadata_info = '.'.join(map(str, metadata_parts))
 
