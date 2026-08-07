@@ -19,6 +19,8 @@ try:
     from setuptools_scm import get_version
     import os
     _root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if os.path.exists(os.path.join(_root_dir, '.git', 'shallow')):
+        raise Exception("Shallow clone detected, falling back to manual version")
     _version_str = get_version(root=_root_dir, version_scheme='post-release')
     # Parse the version string into a tuple
     _parts = []

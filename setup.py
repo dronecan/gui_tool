@@ -36,15 +36,9 @@ with open("README.md", "r", encoding = "utf-8") as fh:
 #
 args = dict(
     name=PACKAGE_NAME,
-    use_scm_version={
-        "write_to": "dronecan_gui_tool/_version_generated.py",
-        "version_scheme": "post-release",
-        "fallback_version": '.'.join(map(str, __version_tuple__[0:3]))
-    },
     packages=find_packages(),
     install_requires=[
         'setuptools>=18.5',
-        'setuptools-scm>=6.2',
         'dronecan>=1.0.25',
         'pyserial>=3.0',
         'pymavlink>=2.4.26',
@@ -93,6 +87,16 @@ args = dict(
     ],
     package_data={'DroneCAN_GUI_Tool': [ 'icons/*.png', 'icons/*.ico']}
 )
+
+is_shallow_clone = os.path.exists(os.path.join(SOURCE_DIR, '.git', 'shallow'))
+if is_shallow_clone:
+    args['version'] = '.'.join(map(str, __version_tuple__[0:3]))
+else:
+    args['use_scm_version'] = {
+        "write_to": "dronecan_gui_tool/_version_generated.py",
+        "version_scheme": "post-release",
+        "fallback_version": '.'.join(map(str, __version_tuple__[0:3]))
+    }
 
 if 'install' in sys.argv and (sys.platform.startswith('linux') or sys.platform.startswith('darwin')):
     # Delegating the desktop integration work to 'install_freedesktop'
