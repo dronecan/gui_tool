@@ -14,11 +14,14 @@ import re
 # Note: This version is determined dynamically at build time or runtime.
 __version_tuple__ = (1, 2, 28)
 
+import os
+
+_root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_is_source = os.path.exists(os.path.join(_root_dir, 'setup.py'))
+
 try:
     # 1. Try to get the version from setuptools_scm (live git repository state)
     from setuptools_scm import get_version
-    import os
-    _root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if os.path.exists(os.path.join(_root_dir, '.git', 'shallow')):
         raise Exception("Shallow clone detected, falling back to manual version")
     _version_str = get_version(root=_root_dir, version_scheme='post-release')
@@ -32,11 +35,16 @@ try:
                 _parts.append(_part)
     __version_tuple__ = tuple(_parts)
 except Exception as e:
-    # 2. Try to import the generated version information (built wheels/MSIs)
-    try:
-        from ._version_generated import __version_tuple__  # noqa: F401
-    except ImportError:
-        # 3. Fall back to the manually updated version
+    if not _is_source:
+        # 2. Try to import the generated version information (built wheels/MSIs)
+        try:
+            from ._version_generated import __version_tuple__  # noqa: F401
+        except ImportError:
+            # 3. Fall back to the manually updated version
+            print("Warning: setuptools_scm is not available or failed with: ", e,
+                  " and _version_generated.py not found. "
+                  "Falling back to manual version.")
+    else:
         print("Warning: setuptools_scm is not available or failed with: ", e,
-              " and _version_generated.py not found. "
+              " and running from source. "
               "Falling back to manual version.")
