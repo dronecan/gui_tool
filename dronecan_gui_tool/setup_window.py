@@ -65,6 +65,37 @@ def _mavcan_interfaces():
         return []
     return ['mavcan::14550']
 
+def _detect_usb2can_serials():
+    """Return serial numbers of attached 8devices USB2CAN adapters via WMI.
+
+    python-can's find_serial_devices() crashes when a WMI object disappears
+    between enumeration and Get(); scan defensively instead.
+    """
+    serials = []
+    try:
+        import pythoncom
+        import win32com.client
+        pythoncom.CoInitialize()
+        wmi = win32com.client.GetObject('winmgmts:')
+        for usb_controller in wmi.InstancesOf('Win32_USBControllerDevice'):
+            try:
+                dependent = usb_controller.Dependent
+                if not dependent:
+                    continue
+                usb_device = wmi.Get(dependent)
+            except Exception:
+                continue
+            name = getattr(usb_device, 'Name', None) or ''
+            device_id = getattr(usb_device, 'DeviceID', None) or ''
+            if 'USB2CAN' in name or 'USB2CAN' in device_id:
+                serial = device_id.split('\\')[-1].strip()
+                if serial and serial not in serials:
+                    serials.append(serial)
+    except Exception as ex:
+        logger.warning('USB2CAN WMI scan failed: %s', ex, exc_info=True)
+    return serials
+
+
 def list_ifaces():
     """Returns dictionary, where key is description, value is the OS assigned name of the port"""
     logger.debug('Updating iface list...')
@@ -97,9 +128,8 @@ def list_ifaces():
         from PyQt5 import QtSerialPort
 
         # Collect ports with priority handling for USB2CAN adapters
-        priority_ports = []  # USB2CAN adapters go first
         regular_ports = []
-        
+
         for port in QtSerialPort.QSerialPortInfo.availablePorts():
             if sys.platform == 'darwin':
                 if 'tty' in port.systemLocation():
@@ -109,47 +139,52 @@ def list_ifaces():
                 sys_name = port.systemLocation()
                 sys_alpha = re.sub(r'[^a-zA-Z0-9]', '', sys_name)
                 description = port.description()
-                
-                # Special handling for 8devices Korlan USB2CAN adapter
-                # The Korlan appears in Windows as "USB2CAN converter"
-                if "USB2CAN converter" in description:
-                    display_name = "8devices Korlan USB2CAN (%s)" % sys_alpha
-                    priority_ports.append((display_name, sys_name))
-                else:
-                    # show the COM port in parentheses to make it clearer which port it is
-                    display_name = "%s (%s)" % (description, sys_alpha)
-                    regular_ports.append((display_name, sys_name))
 
-        # Build output with priority ports first
+                # Korlan presents a COM port, but DroneCAN must open it via the
+                # native CANAL/usb2can backend, not as SLCAN. Skip the COM entry.
+                if description and 'USB2CAN' in description.upper():
+                    logger.debug('Skipping USB2CAN COM port %s (%s)', sys_name, description)
+                    continue
+                # show the COM port in parentheses to make it clearer which port it is
+                display_name = "%s (%s)" % (description, sys_alpha)
+                regular_ports.append((display_name, sys_name))
+
+        # USB2CAN first so it is selected by default when present
         out = OrderedDict()
-        for display_name, sys_name in priority_ports + regular_ports:
+        try:
+            if sys.platform != 'darwin':
+                try:
+                    import pythoncom
+                    pythoncom.CoInitialize()
+                except Exception:
+                    pass
+
+                # Do not call detect_available_configs() — it probes every
+                # python-can backend (socketcand, vector, ...) every 0.5s.
+                for channel in _detect_usb2can_serials():
+                    display_name = "8devices USB2CAN (%s)" % channel
+                    interface_spec = "usb2can:%s" % channel
+                    out[display_name] = interface_spec
+                    logger.info('Added USB2CAN interface: %s -> %s', display_name, interface_spec)
+
+                try:
+                    from can.interfaces.pcan.pcan import PcanBus
+                    for interface in PcanBus._detect_available_configs():
+                        channel = interface.get('channel')
+                        if channel:
+                            out[channel] = channel
+                except Exception:
+                    logger.debug('PCAN detection skipped', exc_info=True)
+        except Exception as ex:
+            logger.warning('Could not load can interfaces: %s', ex, exc_info=True)
+
+        for display_name, sys_name in regular_ports:
             out[display_name] = sys_name
 
         mifaces = _mavcan_interfaces()
         mifaces += ["mcast:0", "mcast:1"]
         for x in mifaces:
             out[x] = x
-
-        try:
-            if sys.platform != 'darwin':
-                from can import detect_available_configs
-                try:
-                    import pythoncom
-                    pythoncom.CoInitialize()
-                except Exception:
-                    pass
-                for interface in detect_available_configs():
-                    if interface['interface'] == "pcan":
-                        out[interface['channel']] = interface['channel']
-                    elif interface['interface'] == "usb2can":
-                        # Add USB2CAN (8devices Korlan) interfaces with descriptive name
-                        # Store as "usb2can:channel" to specify the bustype
-                        display_name = "8devices USB2CAN (%s)" % interface['channel']
-                        interface_spec = "usb2can:%s" % interface['channel'] 
-                        out[display_name] = interface_spec
-                        logger.info('Added USB2CAN interface: %s -> %s', display_name, interface_spec)
-        except Exception as ex:
-            logger.warning('Could not load can interfaces: %s', ex, exc_info=True)
 
         return out
 

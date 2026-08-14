@@ -105,6 +105,68 @@ from .panels import PANELS
 NODE_NAME = 'org.dronecan.gui_tool'
 
 
+def _patch_python_can_driver():
+    """Fix the bundled dronecan PythonCAN backend for USB2CAN (and other python-can buses).
+
+    dronecan.driver.python_can.PythonCAN.receive() multiplies the timeout by 1000,
+    as if python-can used milliseconds. python-can Bus.recv() uses seconds, so
+    node.spin(0.1) blocks for 100 seconds and keeps the adapter locked. A second
+    GUI instance then fails with CanalOpen() error code 0.
+    """
+    try:
+        from dronecan.driver.python_can import PythonCAN
+        from dronecan.driver.common import CANFrame
+    except Exception:
+        logger.warning('Could not patch python-can driver', exc_info=True)
+        return
+
+    if getattr(PythonCAN, '_dronecan_gui_receive_patched', False):
+        return
+
+    def receive(self, timeout=None):
+        self._check_write_feedback()
+        try:
+            # python-can Bus.recv() expects seconds, or None to wait forever
+            msg = self._bus.recv(timeout=timeout)
+            if msg is not None:
+                ts_mono = time.monotonic()
+                ts_real = time.time()
+
+                if ts_real and not ts_mono:
+                    ts_mono = self._convert_real_to_monotonic(ts_real)
+
+                frame = CANFrame(
+                    msg.arbitration_id,
+                    msg.data,
+                    True,
+                    ts_monotonic=ts_mono,
+                    ts_real=ts_real,
+                )
+                self._rx_hook(frame)
+                return frame
+        except Exception:
+            logger.error('Receive exception', exc_info=True)
+
+    PythonCAN.receive = receive
+    PythonCAN._dronecan_gui_receive_patched = True
+    logger.info('Patched python-can receive() to use second timeouts')
+
+
+def _resolve_usb2can_dll():
+    """Return the bundled usb2can.dll path for this process architecture."""
+    import platform
+
+    if getattr(sys, 'frozen', False):
+        gui_tool_dir = os.path.dirname(sys.executable)
+    else:
+        gui_tool_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    arch = platform.machine().lower()
+    subdir = 'x64' if arch in ('amd64', 'x86_64', 'x64') else 'x86'
+    dll_path = os.path.join(gui_tool_dir, 'bin', 'usb2can_canal_v2.0.0', subdir, 'Release', 'usb2can.dll')
+    return dll_path
+
+
 class MainWindow(QMainWindow):
     MAX_SUCCESSIVE_NODE_ERRORS = 1000
 
@@ -586,6 +648,8 @@ class MainWindow(QMainWindow):
 
 def main():
     logger.info('Starting the application')
+    logger.info('Log file: %s', log_file.name)
+    _patch_python_can_driver()
     app = QApplication(sys.argv)
 
     while True:
@@ -637,51 +701,56 @@ def main():
             # Handle USB2CAN interface specification (format: "usb2can:channel")
             actual_iface = iface
             if iface and ':' in iface:
-                bustype, channel = iface.split(':', 1) 
+                bustype, channel = iface.split(':', 1)
                 if bustype == 'usb2can':
-                    # For USB2CAN interfaces, specify the bustype and DLL path
-                    import platform
-                    import os
-                    
-                    actual_iface = channel
+                    # 8devices examples use a lowercase serial; WMI often returns uppercase
+                    actual_iface = channel.strip()
                     iface_kwargs['bustype'] = 'usb2can'
-                    
-                    # Determine the correct DLL path based on architecture
-                    # Handle both development environment and frozen executable
-                    if getattr(sys, 'frozen', False):
-                        # Running as cx_Freeze executable
-                        gui_tool_dir = os.path.dirname(sys.executable)
-                    else:
-                        # Running in development environment
-                        current_dir = os.path.dirname(os.path.abspath(__file__))
-                        gui_tool_dir = os.path.dirname(current_dir)  
-                    
-                    if platform.machine().lower() in ['amd64', 'x86_64', 'x64']:
-                        dll_path = os.path.join(gui_tool_dir, 'bin', 'usb2can_canal_v2.0.0', 'x64', 'Release', 'usb2can.dll')
-                    else:
-                        dll_path = os.path.join(gui_tool_dir, 'bin', 'usb2can_canal_v2.0.0', 'x86', 'Release', 'usb2can.dll')
-                    
+
+                    dll_path = _resolve_usb2can_dll()
+                    if not os.path.isfile(dll_path):
+                        raise RuntimeError('USB2CAN DLL not found at %s' % dll_path)
                     iface_kwargs['dll'] = dll_path
-                    
-                    # Add the DLL directory to the system PATH and DLL search directories
-                    # so that python-can's usb2can backend can find usb2can.dll by name
+
+                    # Add the DLL directory to PATH so usb2can.dll can load its dependencies
                     dll_dir = os.path.dirname(dll_path)
                     if dll_dir not in os.environ.get('PATH', ''):
                         os.environ['PATH'] = dll_dir + ';' + os.environ.get('PATH', '')
                     if hasattr(os, 'add_dll_directory'):
-                        os.add_dll_directory(dll_dir)
-                    
-                    logger.info('Using USB2CAN interface: channel=%s, dll=%s (frozen=%s)', channel, dll_path, getattr(sys, 'frozen', False))
+                        try:
+                            os.add_dll_directory(dll_dir)
+                        except (FileNotFoundError, OSError):
+                            pass
+
+                    logger.info('Using USB2CAN interface: channel=%s, dll=%s (frozen=%s)',
+                                actual_iface, dll_path, getattr(sys, 'frozen', False))
                 elif bustype == 'pcan':
-                    # PCAN interfaces should also specify bustype
                     actual_iface = channel
                     iface_kwargs['bustype'] = 'pcan'
                     logger.info('Using PCAN interface: channel=%s', channel)
 
-            node = dronecan.make_node(actual_iface,
-                                    node_info=node_info,
-                                    mode=dronecan.uavcan.protocol.NodeStatus().MODE_OPERATIONAL,
-                                    **iface_kwargs)
+            # CanalOpen() can fail once if the adapter is still settling or a
+            # previous instance has just released it. Retry a couple of times.
+            attempts = 3 if iface_kwargs.get('bustype') == 'usb2can' else 1
+            node = None
+            last_open_error = None
+            for attempt in range(1, attempts + 1):
+                try:
+                    node = dronecan.make_node(actual_iface,
+                                            node_info=node_info,
+                                            mode=dronecan.uavcan.protocol.NodeStatus().MODE_OPERATIONAL,
+                                            **iface_kwargs)
+                    break
+                except Exception as ex:
+                    last_open_error = ex
+                    if attempt < attempts and 'CanalOpen' in str(ex):
+                        logger.warning('USB2CAN CanalOpen attempt %d/%d failed, retrying: %s',
+                                       attempt, attempts, ex)
+                        time.sleep(0.5)
+                        continue
+                    raise
+            if node is None:
+                raise last_open_error
 
             # Monkey-patch flush_tx_buffer for bus drivers that don't implement it
             # (e.g. usb2can). The dronecan PythonCAN writer thread calls flush_tx_buffer()
@@ -713,7 +782,18 @@ def main():
             iface = None
         except Exception as ex:
             logger.error('DroneCAN node init failed', exc_info=True)
-            show_error('Fatal error', 'Could not initialize DroneCAN node', ex, blocking=True)
+            if 'CanalOpen' in str(ex) or iface_kwargs.get('bustype') == 'usb2can':
+                show_error(
+                    'USB2CAN adapter error',
+                    'Could not open the 8devices USB2CAN adapter.\n\n'
+                    'This usually means another program already has it open '
+                    '(including another DroneCAN GUI Tool window). '
+                    'Close other CAN tools, unplug and replug the adapter, then try again.',
+                    ex,
+                    blocking=True,
+                )
+            else:
+                show_error('Fatal error', 'Could not initialize DroneCAN node', ex, blocking=True)
         else:
             break
 
