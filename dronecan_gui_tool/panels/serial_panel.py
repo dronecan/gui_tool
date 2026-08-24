@@ -564,7 +564,8 @@ class serialPanel(QDialog):
                 return
 
             if buf is None or len(buf) == 0:
-                break
+                self.close_socket()
+                return
             if self.ublox_handling.isChecked():
                 # we will send the data on packet boundaries
                 self.handle_ublox_data_in(buf)
@@ -576,6 +577,8 @@ class serialPanel(QDialog):
 
     def process_tunnel(self):
         '''process data from the tunnel'''
+        if self.tunnel is None:
+            return
         while True:
             buf = self.tunnel.read(120)
             if buf is None or len(buf) == 0:
