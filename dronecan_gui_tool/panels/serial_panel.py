@@ -336,7 +336,6 @@ class serialPanel(QDialog):
         self.num_tx_bytes = 0
         self.node = node
         self.tunnel = None
-        self.target_dev = -1
         self.ublox_msg_in = None
         self.ublox_msg_out = None
 
@@ -347,6 +346,12 @@ class serialPanel(QDialog):
         for b in ["Unchanged", 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]:
             self.baud_select.addItem(str(b))
         self.baud_select.currentIndexChanged.connect(self.change_baud)
+
+        self.serial_device_select = QComboBox()
+        self.serial_device_select.addItem("Default", -1)
+        for index in range(0, 6):
+            self.serial_device_select.addItem(f"Serial {index}", index)
+        self.serial_device_select.currentIndexChanged.connect(self.update_target_serial_device)
 
         self.lock_select = QComboBox()
         self.lock_select.addItem("UnLocked")
@@ -373,6 +378,7 @@ class serialPanel(QDialog):
         self.ublox_handling = QCheckBox(self)
 
         layout.addLayout(self.labelWidget('Node', self.node_select))
+        layout.addLayout(self.labelWidget('Target Serial', self.serial_device_select))
         layout.addLayout(self.labelWidget('UART Locking', self.lock_select))
         layout.addLayout(self.labelWidget('Baudrate', self.baud_select))
         layout.addLayout(self.labelWidget('Listen Port', self.port_select))
@@ -453,6 +459,12 @@ class serialPanel(QDialog):
             baud = self.get_baudrate()
             print("change baudrate to %u" % baud)
             self.tunnel.baudrate = baud
+
+    def update_target_serial_device(self):
+        '''callback when uart target serial device changes'''
+        if self.tunnel:
+            target_serial_dev = int(self.serial_device_select.currentData())
+            self.tunnel.target_serial_dev = target_serial_dev
 
     def update_locked(self):
         '''callback when locked state changes'''
@@ -627,7 +639,8 @@ class serialPanel(QDialog):
             target_node = int(self.node_select.currentText().split(':')[0])
 
             locked = self.lock_select.currentText() == "Locked"
-            self.tunnel = dronecan.DroneCANSerial(None, target_node, self.target_dev,
+            target_serial_dev = int(self.serial_device_select.currentData())
+            self.tunnel = dronecan.DroneCANSerial(None, target_node, target_serial_dev,
                                                   node=self.node,
                                                   lock_port=locked, baudrate=self.get_baudrate())
             print("ucenter connection from %s" % str(self.addr))
