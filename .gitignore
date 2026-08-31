@@ -64,4 +64,8 @@ target/
 # IDE
 .idea/
 
+# Virtual Environments
 venv/
+
+# Build Artifacts
+dronecan_gui_tool/_version_generated.py

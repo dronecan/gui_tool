@@ -7,21 +7,32 @@
 #
 
 import dronecan
-from ..version import __version__
+try:
+    from ..version import __version_tuple__
+except ImportError:
+    __version_tuple__ = (0, 0, 0, "unknown")
 from . import get_icon, get_app_icon
 from PyQt6.QtWidgets import QDialog, QTableWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
     QTableWidgetItem, QHeaderView
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt, PYQT_VERSION_STR, QSize
 
+numeric_parts = [x for x in __version_tuple__ if isinstance(x, int)]
+metadata_parts = [x for x in __version_tuple__ if isinstance(x, str)]
+is_clean_release = len(metadata_parts) == 0
+is_dirty = any((part == "dirty") or (".d" in part) for part in metadata_parts)
+version_info = '.'.join(map(str, numeric_parts))
+metadata_info = '.'.join(map(str, metadata_parts))
 
-ABOUT_TEXT = ('''
-<h3>DroneCAN GUI Tool v{0}</h3>
-Cross-platform application for <a href="http://dronecan.org/">DroneCAN bus</a> management and diagnostics.
+ABOUT_TEXT = (f"""
+<h3>DroneCAN GUI Tool v{version_info}</h3>
+{f"<h4>Dev Build {'(Dirty)' if is_dirty else ''}: {metadata_info}</h4>" if not is_clean_release else ""}
 
-This application is distributed under the terms of the MIT software license. The source repository and the bug \
-tracker are located at <a href="https://github.com/DroneCAN/gui_tool">https://github.com/DroneCAN/gui_tool</a>.
-'''.format('.'.join(map(str, __version__)))).strip().replace('\n', '\n<br/>')
+<p>Cross-platform application for <a href="http://dronecan.org/">DroneCAN bus</a> management and diagnostics.</p>
+
+<p>This application is distributed under the terms of the MIT software license. The source repository and the bug \
+tracker are located at <a href="https://github.com/DroneCAN/gui_tool">https://github.com/DroneCAN/gui_tool</a>.</p>
+""")
 
 
 def _list_3rd_party():

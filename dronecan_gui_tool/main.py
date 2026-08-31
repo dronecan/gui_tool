@@ -42,12 +42,23 @@ else:
 
 logging.basicConfig(stream=sys.stderr, level=logging_level,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
-
-from .version import __version__
+try:
+    from .version import __version_tuple__
+except ModuleNotFoundError:
+    __version_tuple__ = (0, 0, 0, "unknown")
+__version__ = [x for x in __version_tuple__ if isinstance(x, int)]
 if args.version:
-    v = '.'.join(map(str, __version__))
+    metadata_parts = [x for x in __version_tuple__ if isinstance(x, str)]
+    is_clean_release = len(metadata_parts) == 0
+    is_dirty = any(".d" in part for part in metadata_parts)
+    version_info = '.'.join(map(str, __version__))
+    metadata_info = '.'.join(map(str, metadata_parts))
     print("DroneCAN GUI Tool is an application for DroneCAN bus management and diagnostics")
-    print(f"DroneCAN GUI Tool Version: {v}")
+    print(f"DroneCAN GUI Tool Version: {version_info}")
+    if not is_clean_release:
+        print(f"Development Build: {metadata_info}")
+        if is_dirty:
+            print("Warning: Built from a dirty working tree!")
     sys.exit(0)
 
 log_file = tempfile.NamedTemporaryFile(mode='w', prefix='dronecan_gui_tool-', suffix='.log', delete=False)
