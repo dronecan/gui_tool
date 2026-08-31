@@ -65,3 +65,7 @@ target/
 .idea/
 
 venv/
+
+# AppImage build
+AppDir/
+appimagetool-x86_64.AppImage
