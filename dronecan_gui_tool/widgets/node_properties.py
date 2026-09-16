@@ -19,6 +19,7 @@ from . import get_monospace_font, make_icon_button, BasicTable, show_error, requ
 from .node_monitor import node_health_to_color, node_mode_to_color
 from .file_server import FileServer_PathKey
 from ..am32_rtttl import AM32_Rtttl
+from ..paths import normalize_local_path
 
 
 logger = getLogger(__name__)
@@ -254,7 +255,7 @@ class Controls(QGroupBox):
         if not fw_file[0]:
             self.window().show_message('Cancelled')
             return
-        fw_file = os.path.normcase(os.path.abspath(fw_file[0]))
+        fw_file = normalize_local_path(fw_file[0])
 
         # Making sure the file is readable by the process
         try:
