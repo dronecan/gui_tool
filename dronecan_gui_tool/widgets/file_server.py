@@ -18,6 +18,7 @@ from PyQt6.QtCore import QTimer, QDir
 from PyQt6.QtGui import QFileSystemModel
 from logging import getLogger
 from . import make_icon_button, CommitableComboBoxWithHistory, get_icon, flash, LabelWithIcon
+from ..paths import normalize_local_path
 
 
 logger = getLogger(__name__)
@@ -90,7 +91,7 @@ class PathItem(QWidget):
     @property
     def path(self):
         p = self._path_bar.currentText()
-        return os.path.normcase(os.path.abspath(os.path.expanduser(p))) if p else None
+        return normalize_local_path(p) if p else None
 
     def update_hit_count(self, _path, hit_count):
         self._hit_count_label.setText(str(hit_count))
@@ -266,7 +267,7 @@ class FileServerWidget(QGroupBox):
         self._sync_paths()
 
     def add_path(self, path):
-        path = os.path.normcase(os.path.abspath(os.path.expanduser(path)))
+        path = normalize_local_path(path)
 
         for it in self._path_widgets:
             if it.path == path:
