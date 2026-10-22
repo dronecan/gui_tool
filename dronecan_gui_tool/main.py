@@ -15,10 +15,11 @@ import tempfile
 
 assert sys.version[0] == '3'
 
-def parse_load_modules(value):
-    return [m.strip() for m in value.split(",") if m.strip()]
-
 from argparse import ArgumentParser
+
+def parse_load_plugins(value):
+    return [p.strip() for p in value.split(",") if p.strip()]
+
 parser = ArgumentParser(description='DroneCAN GUI tool')
 
 parser.add_argument("--version", action='store_true', help="show version info")
@@ -33,8 +34,8 @@ parser.add_argument("--filtered", action='store_true', help="enable filtering of
 parser.add_argument("--target-system", help="set the targetted system", type=int, default=0)
 parser.add_argument("--source-system", help="set the source system", type=int, default=250)
 
-parser.add_argument("--load-module", type=parse_load_modules, action="append", default=[],
-                    help="Comma-separated list of plugin modules to load (e.g. mod1,mod2). May be repeated.")
+parser.add_argument("--load-plugin", type=parse_load_plugins, action="append", default=[],
+                    help="Comma-separated list of plugins to load (e.g. plugin1,plugin2). May be repeated.")
 parser.add_argument("--auto-load-plugins", action="store_true", help="Automatically load plugins from ~/dronecan_gui_tool/plugins")
 
 args = parser.parse_args()
@@ -114,30 +115,33 @@ from .panels import PANELS
 from .panels import import_panel, register_plugin_dir, discover_user_plugins
 
 # Register the user ~/dronecan_gui_tool/plugins folder as a package,
-# allowing for custom plugin modules to be loaded from there.
+# allowing for custom plugins to be loaded from there.
 plugins_dir = Path.home() / "dronecan_gui_tool" / "plugins"
 if plugins_dir.is_dir():
     register_plugin_dir(plugins_dir)
 
 EXT_PLUGINS = []
-auto_modules = []
-cli_modules = []
+auto_plugins = []
 
 if args.auto_load_plugins:
-    auto_modules = discover_user_plugins()
+    auto_plugins = discover_user_plugins()
 
-if args.load_module:
-    cli_modules = [m for group in args.load_module for m in group]
-# Drop duplicates while preserving order: folder plugins first, then --load-module
-modules = list(dict.fromkeys(auto_modules + cli_modules))
-if len(modules) > 0:
-    for module in modules:
+cli_plugins = [p for group in args.load_plugin for p in group]
+# Drop duplicates while preserving order: folder plugins first, then --load-plugin
+plugins = list(dict.fromkeys(auto_plugins + cli_plugins))
+if len(plugins) > 0:
+    for plugin in plugins:
         try:
-            panel = import_panel(module)
-            EXT_PLUGINS.append(panel)
+            panel = import_panel(plugin)
         except Exception as ex:
-            logger.error(f"Unable to load {module}: {ex}")
-    logger.info(f"Loaded {len(EXT_PLUGINS)} plugin modules!")
+            logger.error(f"Unable to load plugin {plugin}: {ex}")
+            continue
+        # The same module may be requested under different names, e.g. 'foo' and
+        # 'dronecan_gui_tool_plugins.foo', so compare the resolved module names.
+        if any(p.module_name == panel.module_name for p in EXT_PLUGINS):
+            continue
+        EXT_PLUGINS.append(panel)
+    logger.info(f"Loaded {len(EXT_PLUGINS)} plugins")
 
 NODE_NAME = 'org.dronecan.gui_tool'
 
@@ -247,7 +251,7 @@ class MainWindow(QMainWindow):
             panels_menu.addAction(action)
 
         #
-        # External Modules menu
+        # Plugins menu
         #
         def get_or_create_submenu(parent_menu, menu_name):
             """
@@ -261,12 +265,12 @@ class MainWindow(QMainWindow):
             return parent_menu.addMenu(menu_name)
 
         if len(EXT_PLUGINS) > 0:
-            extern_modules_menu = self.menuBar().addMenu('P&lugins')
+            plugins_menu = self.menuBar().addMenu('P&lugins')
             for idx, panel in enumerate(EXT_PLUGINS):
                 menu_path = getattr(panel, "menu_path", "")
                 path_parts = [p for p in menu_path.split("/") if p]
 
-                current_menu = extern_modules_menu
+                current_menu = plugins_menu
                 for part in path_parts:
                     current_menu = get_or_create_submenu(current_menu, part)
 
@@ -275,7 +279,7 @@ class MainWindow(QMainWindow):
                 if icon:
                     action.setIcon(icon)
                 if idx < 9:
-                    action.setShortcut(QKeySequence(f'Ctrl+Shift+[,{(idx + 1)}'))
+                    action.setShortcut(QKeySequence(f'Ctrl+Alt+P, {idx + 1}'))
                 action.triggered.connect(lambda state, panel=panel: panel.safe_spawn(self, self._node))
                 current_menu.addAction(action)
 

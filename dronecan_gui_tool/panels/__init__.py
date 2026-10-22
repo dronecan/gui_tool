@@ -88,10 +88,10 @@ def import_panel(name):
     name = _find_user_plugin(name) or name
     mod = importlib.import_module(name)
     if not hasattr(mod, "PANEL_NAME"):
-        raise ImportError(f"Module '{name}' is not a valid panel - missing 'PANEL_NAME'")
+        raise ImportError(f"Plugin '{name}' is not a valid panel - missing 'PANEL_NAME'")
 
     if not callable(getattr(mod, "spawn", None)):
-        raise ImportError(f"Module '{name}' is not a valid panel - missing 'spawn()'")
+        raise ImportError(f"Plugin '{name}' is not a valid panel - missing 'spawn()'")
 
     logger.info("Loaded plugin %s from %s", name, mod.__file__)
     return PluginPanelDescriptor(mod)
@@ -100,6 +100,7 @@ class PluginPanelDescriptor(PanelDescriptor):
     def __init__(self, module):
         super().__init__(module)
 
+        self.module_name = module.__name__
         self.menu_path = getattr(module, "MENU_PATH", "")
 
 PANELS = [
