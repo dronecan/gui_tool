@@ -107,6 +107,103 @@ python3.5 -m pip install git+https://github.com/DroneCAN/gui_tool@master
 We would like to provide prebuilt application packages instead of the mess above.
 Contributions adding this capability would be welcome.
 
+## Plugins
+
+Plugins are custom panels that are loaded at startup and listed under the **Plugins** menu.
+The first nine plugins are given the shortcuts `Ctrl+Alt+P` followed by `1` to `9`.
+
+### Loading plugins
+
+Plugins can be loaded from the plugins folder, `~/dronecan_gui_tool/plugins`, or from any
+installed Python module:
+
+```bash
+# Load every plugin in ~/dronecan_gui_tool/plugins
+dronecan_gui_tool --auto-load-plugins
+
+# Load specific plugins by name (comma-separated, may be repeated)
+dronecan_gui_tool --load-plugin my_panel,other_panel --load-plugin mypackage.my_panel
+```
+
+- The plugins folder is not created automatically.
+- `--load-plugin` looks in the plugins folder first, then falls back to installed modules.
+  This works without `--auto-load-plugins`.
+- Files and folders starting with `_` (e.g. `_helpers.py`) are not loaded by `--auto-load-plugins`.
+  Use this for shared code, or to disable a plugin without deleting it.
+- A plugin that fails to load is logged as an error and skipped; the tool still starts.
+
+Plugins in the plugins folder are imported under the `dronecan_gui_tool_plugins` package, so they
+cannot clash with installed modules of the same name. A plugin can be a single file (`my_panel.py`)
+or a package (`my_panel/__init__.py`). A plugin split across several files must be a package and
+use relative imports (`from . import helpers`), as a plain `import helpers` will not find sibling files.
+
+When using a packaged build (e.g. the Windows MSI), plugins can only import the packages that are
+bundled with the tool, such as `PyQt6` and `dronecan`.
+
+### Writing a plugin
+
+A plugin is a Python module that provides:
+
+| Name | Required | Description |
+|------|----------|-------------|
+| `PANEL_NAME` | Yes | Name shown in the Plugins menu. |
+| `spawn(parent, node)` | Yes | Called when the menu item is selected. Should open (or raise) the panel window and return it. |
+| `get_icon()` | No | Returns a `QIcon` for the menu item. |
+| `MENU_PATH` | No | Submenu path within the Plugins menu, e.g. `"Vendor/Sensors"`. |
+
+Panels should keep a single window open, and remove any node handlers when that window closes.
+Otherwise the handlers keep running in the background after the window is closed.
+
+```python
+# ~/dronecan_gui_tool/plugins/node_uptime.py
+import dronecan
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QDialog, QLabel, QVBoxLayout
+from dronecan_gui_tool.widgets import get_icon as _get_icon
+
+PANEL_NAME = 'Node Uptime'
+MENU_PATH = 'Examples'
+
+_singleton = None
+
+
+class NodeUptimePanel(QDialog):
+    def __init__(self, parent, node):
+        super().__init__(parent)
+        self.setWindowTitle(PANEL_NAME)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+
+        self._label = QLabel('Waiting for NodeStatus...', self)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self._label)
+
+        # Keep the handle so the handler can be removed when the window closes
+        self._handler = node.add_handler(dronecan.uavcan.protocol.NodeStatus, self._on_node_status)
+
+    def _on_node_status(self, e):
+        self._label.setText(f'Node {e.transfer.source_node_id}: up {e.message.uptime_sec} s')
+
+    def closeEvent(self, event):
+        global _singleton
+        self._handler.remove()
+        _singleton = None
+        super().closeEvent(event)
+
+
+def spawn(parent, node):
+    global _singleton
+    if _singleton is None:
+        _singleton = NodeUptimePanel(parent, node)
+    _singleton.show()
+    _singleton.raise_()
+    _singleton.activateWindow()
+    return _singleton
+
+
+def get_icon():
+    return _get_icon('fa6s.clock')
+```
+
 ## Development
 
 ### Releasing new version
