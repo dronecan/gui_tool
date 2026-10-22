@@ -33,7 +33,9 @@ parser.add_argument("--filtered", action='store_true', help="enable filtering of
 parser.add_argument("--target-system", help="set the targetted system", type=int, default=0)
 parser.add_argument("--source-system", help="set the source system", type=int, default=250)
 
-parser.add_argument("--load-module", type=parse_load_modules, nargs=1,  help="Comma-separated list of modules to load (e.g. mod1,mod2).") # exactly one argument required if flag is present
+parser.add_argument("--load-module", type=parse_load_modules, action="append", default=[],
+                    help="Comma-separated list of plugin modules to load (e.g. mod1,mod2). May be repeated.")
+parser.add_argument("--auto-load-plugins", action="store_true", help="Automatically load plugins from ~/dronecan_gui_tool/plugins")
 
 args = parser.parse_args()
 
@@ -109,18 +111,25 @@ from .widgets.about_window import AboutWindow
 from .widgets.can_adapter_control_panel import spawn_window as spawn_can_adapter_control_panel
 
 from .panels import PANELS
-from .panels import import_panel
+from .panels import import_panel, register_plugin_dir, discover_user_plugins
 
-# Add the User ~/dronecan_gui_tool/plugins folder to the import path,
+# Register the user ~/dronecan_gui_tool/plugins folder as a package,
 # allowing for custom plugin modules to be loaded from there.
 plugins_dir = Path.home() / "dronecan_gui_tool" / "plugins"
-if plugins_dir.exists():
-    str_plugin_dir = str(plugins_dir)
-    if str_plugin_dir not in sys.path:
-        sys.path.insert(0, str_plugin_dir)
+if plugins_dir.is_dir():
+    register_plugin_dir(plugins_dir)
 
 EXT_PLUGINS = []
-modules = args.load_module[0] if args.load_module else []
+auto_modules = []
+cli_modules = []
+
+if args.auto_load_plugins:
+    auto_modules = discover_user_plugins()
+
+if args.load_module:
+    cli_modules = [m for group in args.load_module for m in group]
+# Drop duplicates while preserving order: folder plugins first, then --load-module
+modules = list(dict.fromkeys(auto_modules + cli_modules))
 if len(modules) > 0:
     for module in modules:
         try:
