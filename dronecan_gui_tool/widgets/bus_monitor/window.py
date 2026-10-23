@@ -101,7 +101,7 @@ def colorize_transfer_id(frame):
 def formatted_data(frame):
     fmt_data = ''
     data_len = len(frame.data)
-    for i in range(int(data_len/8)+1):
+    for i in range(max(1, (data_len + 7) // 8)):
         beg = i*8
         end = min((i+1)*8, data_len)
         fmt_data = "\n".join([fmt_data, ' '.join(['%02X' % x for x in frame.data[beg:end]])])
@@ -113,7 +113,7 @@ def formatted_data(frame):
 def formatted_ascii(frame):
     fmt_data = ''
     data_len = len(frame.data)
-    for i in range(int(data_len/8)+1):
+    for i in range(max(1, (data_len + 7) // 8)):
         beg = i*8
         end = min((i+1)*8, data_len)
         fmt_data = "\n".join([fmt_data, 
