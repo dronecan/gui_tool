@@ -13,14 +13,15 @@ from functools import partial
 import dronecan
 from dronecan.driver import CANFrame
 from PyQt6.QtWidgets import QMainWindow, QHeaderView, QLabel, QSplitter, QSizePolicy, QWidget, QHBoxLayout, \
-    QPlainTextEdit, QDialog, QVBoxLayout, QMenu
+    QPlainTextEdit, QDialog, QVBoxLayout, QMenu, QFileDialog, QApplication
 from PyQt6.QtGui import QColor, QIcon, QTextOption, QAction
 from PyQt6.QtCore import Qt, QTimer
 from pyqtgraph import PlotWidget, mkPen
 from logging import getLogger
 from .. import BasicTable, map_7bit_to_color, RealtimeLogWidget, get_monospace_font, get_icon, flash, get_app_icon, \
-    show_error
+    show_error, make_icon_button
 from .transfer_decoder import decode_transfer_from_frame
+from .pcapng_writer import PcapngCANWriter
 
 
 logger = getLogger(__name__)
@@ -252,6 +253,7 @@ class BusMonitorWindow(QMainWindow):
     def __init__(self, get_frame, iface_name):
         super(BusMonitorWindow, self).__init__()
         self.setWindowTitle('CAN bus monitor (%s)' % iface_name.split(os.path.sep)[-1])
+        self._iface_name = iface_name
         self.setWindowIcon(get_app_icon())
 
         # get dsdl_directory from parent process, if set
@@ -270,6 +272,15 @@ class BusMonitorWindow(QMainWindow):
 
         self._log_widget.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self._log_widget.table.customContextMenuRequested.connect(self._context_menu_requested)
+
+        self._file_writer = None
+        self._log_to_file_button = make_icon_button('fa6s.file-export',
+                                                    'Log all frames to a pcapng file, which can be opened with '
+                                                    'Wireshark', self, checkable=True, text='Log To File',
+                                                    on_clicked=self._on_log_to_file_clicked)
+        self._log_widget.custom_area_layout.addWidget(self._log_to_file_button)
+        # The window is not necessarily closed when the process is asked to stop, so the file is closed here too
+        QApplication.instance().aboutToQuit.connect(self._stop_logging_to_file)
 
         self._stat_display = QLabel('0 / 0 / 0', self)
         stat_display_label = QLabel('TX / RX / FPS: ', self)
@@ -347,7 +358,68 @@ class BusMonitorWindow(QMainWindow):
         super(BusMonitorWindow, self).resizeEvent(qresizeevent)
         self._update_widget_sizes()
 
+    def closeEvent(self, qcloseevent):
+        self._stop_logging_to_file()
+        super(BusMonitorWindow, self).closeEvent(qcloseevent)
+
+    def _on_log_to_file_clicked(self, checked):
+        if checked:
+            self._start_logging_to_file()
+        else:
+            self._stop_logging_to_file()
+
+    def _start_logging_to_file(self):
+        default_name = 'dronecan_%s_%s.pcapng' % (self._iface_name.split(os.path.sep)[-1],
+                                                 datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
+        path, _ = QFileDialog.getSaveFileName(self, 'Log CAN frames to file',
+                                              os.path.join(os.path.expanduser('~'), default_name),
+                                              'pcapng files (*.pcapng);;All files (*)')
+        if not path:
+            self._log_to_file_button.setChecked(False)
+            return
+
+        try:
+            self._file_writer = PcapngCANWriter(path, self._iface_name)
+        except Exception as ex:
+            logger.error('Could not create log file %r', path, exc_info=True)
+            show_error('Log To File', 'Could not create the log file', ex, self)
+            self._log_to_file_button.setChecked(False)
+            return
+
+        logger.info('Logging CAN frames to %r', path)
+        self._log_to_file_button.setToolTip('Logging to %s\nClick to stop' % path)
+
+    def _stop_logging_to_file(self):
+        if self._file_writer is None:
+            return
+
+        writer, self._file_writer = self._file_writer, None
+        self._log_to_file_button.setChecked(False)
+        self._log_to_file_button.setToolTip('Log all frames to a pcapng file, which can be opened with Wireshark')
+        try:
+            writer.close()
+        except Exception:
+            logger.error('Could not close log file %r', writer.path, exc_info=True)
+        logger.info('Logged %d CAN frames to %r', writer.frame_count, writer.path)
+        flash(self, 'Logged %d frames to %s', writer.frame_count, writer.path, duration=10)
+
+    def _write_frame_to_file(self, direction, frame):
+        try:
+            self._file_writer.write_frame(direction, frame)
+        except Exception as ex:
+            logger.error('Could not write to log file %r, logging stopped', self._file_writer.path, exc_info=True)
+            path = self._file_writer.path
+            self._stop_logging_to_file()
+            show_error('Log To File', 'Could not write to %s, logging stopped' % path, ex, self)
+
     def _update_stat(self):
+        # Flushing periodically, so that the log file can be inspected while logging is in progress
+        if self._file_writer is not None:
+            try:
+                self._file_writer.flush()
+            except Exception:
+                logger.error('Could not flush log file %r', self._file_writer.path, exc_info=True)
+
         bus_load, ts_mono = self._traffic_stat.get_frames_per_second()
 
         if len(self._bus_load_samples[0]) >= self.BUS_LOAD_PLOT_MAX_SAMPLES:
@@ -372,6 +444,8 @@ class BusMonitorWindow(QMainWindow):
                 break
             direction, frame = item
             self._traffic_stat.add_frame(direction, frame)
+            if self._file_writer is not None:
+                self._write_frame_to_file(direction, frame)
             # There is no need to maintain a second queue actually; should be refactored
             self._log_widget.add_item_async((direction, frame))
 
