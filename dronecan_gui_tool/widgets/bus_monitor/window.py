@@ -247,6 +247,7 @@ def row_to_frame(table, row_index):
 class BusMonitorWindow(QMainWindow):
     DEFAULT_PLOT_X_RANGE = 120
     BUS_LOAD_PLOT_MAX_SAMPLES = 50000
+    DEFAULT_MAX_ROWS = 200000
 
     def __init__(self, get_frame, iface_name):
         super(BusMonitorWindow, self).__init__()
@@ -261,7 +262,8 @@ class BusMonitorWindow(QMainWindow):
         self._get_frame = get_frame
 
         self._log_widget = RealtimeLogWidget(self, columns=COLUMNS, font=get_monospace_font(),
-                                             pre_redraw_hook=self._redraw_hook, multi_line_rows=True)
+                                             pre_redraw_hook=self._redraw_hook, multi_line_rows=True,
+                                             max_rows=self.DEFAULT_MAX_ROWS)
         self._log_widget.on_selection_changed = self._update_measurement_display
 
         self._log_widget.table.cellClicked.connect(lambda row, col: self._decode_transfer_at_row(row))
