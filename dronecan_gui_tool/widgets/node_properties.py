@@ -810,7 +810,7 @@ class ConfigParams(QGroupBox):
                                                    'Parameter files (*.parm);;All files (*.*)')
         if not param_file[0]:
             return
-        param_file = os.path.normcase(os.path.abspath(param_file[0]))
+        param_file = normalize_local_path(param_file[0])
         print("save to file", param_file)
         f = open(param_file, "w")
         for p in self._params:
@@ -863,7 +863,7 @@ class ConfigParams(QGroupBox):
         for p in self._params:
             pdict[str(p.name)] = p.value
 
-        param_file = os.path.normcase(os.path.abspath(param_file[0]))
+        param_file = normalize_local_path(param_file[0])
         print("load from file", param_file)
         f = open(param_file, "r")
         for line in f.readlines():
