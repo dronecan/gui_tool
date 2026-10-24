@@ -8,10 +8,10 @@
 
 import os
 import re
-import queue
+import collections
 import importlib.resources
 from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QApplication, QWidget, \
-    QComboBox, QCompleter, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox, QLineEdit
+    QComboBox, QCompleter, QPushButton, QHBoxLayout, QVBoxLayout, QMessageBox, QLineEdit, QSpinBox
 from PyQt6.QtCore import Qt, QTimer, QStringListModel
 from PyQt6.QtGui import QColor, QKeySequence, QFont, QFontInfo, QIcon
 from logging import getLogger
@@ -454,8 +454,38 @@ class LabelWithIcon(QPushButton):
         self.setEnabled(False)
 
 
+class SteppableSpinBox(QSpinBox):
+    """
+    A spin box whose arrows (and Page Up/Down) move the value to the next or previous multiple of the step size,
+    instead of adding the step size to the value; the result is then clamped to the range.
+
+    Args:
+        parent:     Parent widget.
+        min:        Minimum value.
+        max:        Maximum value.
+        step_size:  The arrows step to multiples of this value.
+    """
+    def __init__(self, parent=None, min=0, max=99, step_size=1):
+        super(SteppableSpinBox, self).__init__(parent)
+        self.setRange(min, max)
+        self.setSingleStep(step_size)
+
+    def stepBy(self, steps):
+        step = self.singleStep()
+        if steps > 0:
+            value = (self.value() // step + steps) * step
+        else:
+            value = -(-self.value() // step) * step + steps * step     # Rounds up to a multiple, then steps down
+        self.setValue(max(self.minimum(), min(self.maximum(), value)))
+
+
 class RealtimeLogWidget(QWidget):
-    def __init__(self, parent, started_by_default=False, pre_redraw_hook=None, **table_options):
+    def __init__(self, parent, started_by_default=False, pre_redraw_hook=None, max_rows=None, **table_options):
+        """
+        Args:
+            max_rows:   If set, the oldest rows are removed once the table grows beyond this many rows, and a
+                        control to edit the limit is shown. Unlimited by default.
+        """
         super(RealtimeLogWidget, self).__init__(parent)
 
         self.on_selection_changed = None
@@ -467,8 +497,10 @@ class RealtimeLogWidget(QWidget):
 
         self._clear_button = make_icon_button('fa6s.trash', 'Clear', self, on_clicked=self._clear)
 
-        self._pause = make_icon_button('fa6s.pause', 'Pause updates; data received while paused will not be lost', self,
-                                       checkable=True)
+        pause_tool_tip = 'Pause updates; data received while paused will not be lost'
+        if max_rows is not None:
+            pause_tool_tip += ', up to the row limit'
+        self._pause = make_icon_button('fa6s.pause', pause_tool_tip, self, checkable=True)
 
         self._start_button = make_icon_button('fa6s.video', 'Start/stop capturing', self,
                                               checkable=True,
@@ -484,12 +516,26 @@ class RealtimeLogWidget(QWidget):
         self._row_count = LabelWithIcon(get_icon('fa6s.list'), '0', self)
         self._row_count.setToolTip('Row count')
 
+        self._max_rows = None
+        if max_rows is not None:
+            self._max_rows_spinbox = SteppableSpinBox(self, min=1000, max=10 ** 8, step_size=10000)
+            self._max_rows_spinbox.setToolTip('Maximum number of rows; the oldest rows are removed beyond this limit')
+            self._max_rows_spinbox.setPrefix('max ')
+            self._max_rows_spinbox.setGroupSeparatorShown(True)
+            self._max_rows_spinbox.setKeyboardTracking(False)       # Apply when editing is finished, not per keystroke
+            self._max_rows_spinbox.setValue(max_rows)
+            self._max_rows_spinbox.valueChanged.connect(self._set_max_rows)
+        else:
+            self._max_rows_spinbox = None
+
         self._redraw_timer = QTimer(self)
         self._redraw_timer.setSingleShot(False)
         self._redraw_timer.timeout.connect(self._redraw)
         self._redraw_timer.start(100)
 
-        self._queue = queue.Queue()
+        # Items beyond the row limit would be removed from the table anyway, so the queue drops the oldest of them
+        self._queue = collections.deque()
+        self._set_max_rows(max_rows)
 
         layout = QVBoxLayout(self)
 
@@ -506,6 +552,8 @@ class RealtimeLogWidget(QWidget):
         controls_layout.addStretch()
 
         controls_layout.addWidget(self._row_count)
+        if self._max_rows_spinbox is not None:
+            controls_layout.addWidget(self._max_rows_spinbox)
 
         layout.addLayout(controls_layout)
         layout.addWidget(self._search_bar)
@@ -527,6 +575,20 @@ class RealtimeLogWidget(QWidget):
         self._table.setRowCount(0)
         self._row_count.setText(str(self._table.rowCount()))
 
+    def _set_max_rows(self, max_rows):
+        self._max_rows = max_rows
+        self._queue = collections.deque(self._queue, maxlen=max_rows)
+        self._trim_rows()
+        self._row_count.setText(str(self._table.rowCount()))
+
+    def _trim_rows(self):
+        if self._max_rows is None:
+            return
+        excess = self._table.rowCount() - self._max_rows
+        if excess > 0:
+            # One bulk removal is much cheaper than removing the rows one by one
+            self._table.model().removeRows(0, excess)
+
     def _call_on_selection_changed(self):
         if not self.on_selection_changed:
             return
@@ -544,14 +606,16 @@ class RealtimeLogWidget(QWidget):
             if not self.paused:
                 while True:
                     try:
-                        item = self._queue.get_nowait()
-                    except queue.Empty:
+                        item = self._queue.popleft()
+                    except IndexError:
                         break
 
                     row = self._table.rowCount()
                     self._table.insertRow(row)
                     self._table.set_row(row, item)
                     do_scroll = True
+
+                self._trim_rows()
 
             self._table.setUpdatesEnabled(True)
 
@@ -561,14 +625,13 @@ class RealtimeLogWidget(QWidget):
             self._row_count.setText(str(self._table.rowCount()))
         else:
             # Discarding inputs
-            while self._queue.qsize() > 0:
-                self._queue.get_nowait()
+            self._queue.clear()
 
     def _on_start_button_clicked(self):
         self._pause.setChecked(False)
 
     def add_item_async(self, item):
-        self._queue.put_nowait(item)
+        self._queue.append(item)
 
     @property
     def table(self):
