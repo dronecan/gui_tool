@@ -364,7 +364,9 @@ class BusMonitorWindow(QMainWindow):
         self._load_plot.setRange(xRange=(xmin, xmax), padding=0)
 
     def _redraw_hook(self):
-        while True:
+        # Bounded so that a sender outpacing us cannot keep this loop spinning forever
+        deadline = time.monotonic() + self._log_widget.MAX_REDRAW_DURATION
+        while time.monotonic() < deadline:
             item = self._get_frame()
             if item is None:
                 break

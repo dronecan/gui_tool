@@ -8,6 +8,7 @@
 
 import os
 import re
+import time
 import queue
 import importlib.resources
 from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QApplication, QWidget, \
@@ -60,6 +61,7 @@ class BasicTable(QTableWidget):
         super(BasicTable, self).__init__(parent)
 
         self.columns = columns
+        self._multi_line_rows = multi_line_rows
 
         self.filter = None
 
@@ -73,7 +75,9 @@ class BasicTable(QTableWidget):
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         if multi_line_rows:
-            self.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+            # ResizeToContents re-measures every row on each update, which is O(N) and freezes large tables.
+            # Instead, each row is sized once from its line count when it is set; see set_row().
+            self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
             self.setAlternatingRowColors(True)
         else:
             self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
@@ -112,17 +116,26 @@ class BasicTable(QTableWidget):
             return True
 
     def set_row(self, row, model):
+        num_lines = 1
         for col, spec in enumerate(self.columns):
             value = spec.render(model)
             color = None
             if isinstance(value, tuple):
                 value, color = value
-            w = QTableWidgetItem(str(value))
+            text = str(value)
+            num_lines = max(num_lines, text.count('\n') + 1)
+            w = QTableWidgetItem(text)
             if color is not None:
                 w.setBackground(color)
             w.setTextAlignment(Qt.AlignVCenter | Qt.AlignLeft)
             w.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
             self.setItem(row, col, w)
+
+        # The height that ResizeToContents would give, computed from the line count, which is much cheaper than
+        # resizeRowToContents() or sizeHintForRow()
+        if self._multi_line_rows:
+            self.setRowHeight(row, max(self.verticalHeader().minimumSectionSize(),
+                                       num_lines * self.fontMetrics().lineSpacing()))
 
         self.setRowHidden(row, not self.apply_filter_to_row(row))
 
@@ -455,6 +468,8 @@ class LabelWithIcon(QPushButton):
 
 
 class RealtimeLogWidget(QWidget):
+    MAX_REDRAW_DURATION = 0.05
+
     def __init__(self, parent, started_by_default=False, pre_redraw_hook=None, **table_options):
         super(RealtimeLogWidget, self).__init__(parent)
 
@@ -542,7 +557,10 @@ class RealtimeLogWidget(QWidget):
 
             do_scroll = False
             if not self.paused:
-                while True:
+                # Bounding the time spent per redraw keeps the UI responsive under heavy load;
+                # whatever is left in the queue will be picked up on the next redraw.
+                deadline = time.monotonic() + self.MAX_REDRAW_DURATION
+                while time.monotonic() < deadline:
                     try:
                         item = self._queue.get_nowait()
                     except queue.Empty:
