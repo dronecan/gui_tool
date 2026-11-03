@@ -636,6 +636,12 @@ class ConfigParams(QGroupBox):
         self._table.cellDoubleClicked.connect(lambda row, col: self._do_edit_param(row))
         self._table.on_enter_pressed = self._on_cell_enter_pressed
 
+        self._name_filter = QLineEdit(self)
+        self._name_filter.setPlaceholderText('Filter parameters by name')
+        self._name_filter.setToolTip('Show only parameters whose name contains this text (case-insensitive)')
+        self._name_filter.setClearButtonEnabled(True)
+        self._name_filter.textChanged.connect(self._apply_name_filter)
+
         self._params = []
 
         layout = QVBoxLayout(self)
@@ -648,8 +654,17 @@ class ConfigParams(QGroupBox):
         controls_layout.addWidget(self._save_to_file, 1)
         controls_layout.addWidget(self._load_from_file, 1)
         layout.addLayout(controls_layout)
+        layout.addWidget(self._name_filter)
         layout.addWidget(self._table)
         self.setLayout(layout)
+
+    def _row_matches_name_filter(self, row):
+        needle = self._name_filter.text().strip().lower()
+        return not needle or needle in str(self._params[row].name).lower()
+
+    def _apply_name_filter(self, *_):
+        for row in range(len(self._params)):
+            self._table.setRowHidden(row, not self._row_matches_name_filter(row))
 
     def _on_cell_enter_pressed(self, list_of_row_col_pairs):
         unique_rows = set([row for row, _col in list_of_row_col_pairs])
@@ -705,6 +720,7 @@ class ConfigParams(QGroupBox):
             self._params.append(resp)
             self._table.setRowCount(self._table.rowCount() + 1)
             self._table.set_row(self._table.rowCount() - 1, (next_idx, resp))
+            self._table.setRowHidden(next_idx, not self._row_matches_name_filter(next_idx))
             next_idx += 1
 
     def _try_finish_fetch(self):
