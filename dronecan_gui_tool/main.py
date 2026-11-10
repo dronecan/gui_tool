@@ -681,12 +681,16 @@ def main():
         # Let the current Qt callback finish before closing the main window.
         QTimer.singleShot(0, window.close)
 
-    previous_sigint_handler = signal.signal(signal.SIGINT, close_on_interrupt)
+    previous_sigint_handler = signal.getsignal(signal.SIGINT)
+    sigint_handler_installed = previous_sigint_handler != signal.SIG_IGN
+    if sigint_handler_installed:
+        signal.signal(signal.SIGINT, close_on_interrupt)
     try:
         logger.info('Init complete, invoking the Qt event loop')
         exit_code = app.exec_()
     finally:
-        signal.signal(signal.SIGINT, previous_sigint_handler)
+        if sigint_handler_installed:
+            signal.signal(signal.SIGINT, previous_sigint_handler)
 
     node.close()
 
