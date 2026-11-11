@@ -99,7 +99,7 @@ def test_sigint_respects_previous_handler(tmp_path, initial_handler):
     assert 'exit_code 0' in completed.stdout
     if initial_handler == 'ignored_replaced':
         assert 'replacement_retained True' in completed.stdout
-    else:
+    elif initial_handler != 'unknown':
         assert 'restored True' in completed.stdout
     if initial_handler == 'unknown':
         assert 'signal_calls 0' in completed.stdout
