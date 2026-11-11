@@ -9,6 +9,7 @@
 import logging
 import multiprocessing
 import os
+import signal
 import sys
 import time
 import tempfile
@@ -676,8 +677,22 @@ def main():
     window = MainWindow(node, iface, iface_kwargs)
     window.show()
 
-    logger.info('Init complete, invoking the Qt event loop')
-    exit_code = app.exec_()
+    def close_on_interrupt(_signum, _frame):
+        # Let the current Qt callback finish before closing the main window.
+        QTimer.singleShot(0, window.close)
+
+    previous_sigint_handler = signal.getsignal(signal.SIGINT)
+    # None means Python does not know the original native handler, so it
+    # cannot restore it. Leave such handlers, and SIG_IGN, untouched.
+    sigint_handler_installed = previous_sigint_handler is not None and previous_sigint_handler != signal.SIG_IGN
+    if sigint_handler_installed:
+        signal.signal(signal.SIGINT, close_on_interrupt)
+    try:
+        logger.info('Init complete, invoking the Qt event loop')
+        exit_code = app.exec_()
+    finally:
+        if sigint_handler_installed:
+            signal.signal(signal.SIGINT, previous_sigint_handler)
 
     node.close()
 
