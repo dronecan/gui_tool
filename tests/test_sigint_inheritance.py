@@ -1,6 +1,7 @@
 """Exercise SIGINT inheritance through the GUI event loop without CAN hardware."""
 
 import os
+import site
 import signal
 import subprocess
 import sys
@@ -32,10 +33,12 @@ def test_sigint_respects_previous_handler(tmp_path, initial_handler):
                 self.poller.start(20)
             def show(self):
                 super().show()
-                QTimer.singleShot(100, lambda: os.kill(os.getpid(), signal.SIGINT))
-                if mode == 'ignored_replaced':
-                    QTimer.singleShot(200, lambda: signal.signal(signal.SIGINT, replacement))
-                QTimer.singleShot(500, lambda: (print('alive_after_sigint', flush=True), QApplication.instance().quit()))
+                def send_interrupt():
+                    os.kill(os.getpid(), signal.SIGINT)
+                    if mode == 'ignored_replaced':
+                        QTimer.singleShot(100, lambda: signal.signal(signal.SIGINT, replacement))
+                    QTimer.singleShot(400, lambda: (print('alive_after_sigint', flush=True), QApplication.instance().quit()))
+                QTimer.singleShot(100, send_interrupt)
             def closeEvent(self, event):
                 print('window_closed', flush=True)
                 super().closeEvent(event)
@@ -58,7 +61,13 @@ def test_sigint_respects_previous_handler(tmp_path, initial_handler):
         print('replacement_retained', signal.getsignal(signal.SIGINT) is replacement, flush=True)
     ''')
     env = os.environ.copy()
-    env.update({'QT_QPA_PLATFORM': 'offscreen', 'HOME': str(tmp_path), 'XDG_CONFIG_HOME': str(tmp_path)})
+    env.update({
+        'QT_QPA_PLATFORM': 'offscreen',
+        'HOME': str(tmp_path),
+        'XDG_CONFIG_HOME': str(tmp_path),
+        'TMPDIR': str(tmp_path),
+        'PYTHONUSERBASE': site.getuserbase(),
+    })
 
     def ignore_sigint():
         signal.signal(signal.SIGINT, signal.SIG_IGN)
