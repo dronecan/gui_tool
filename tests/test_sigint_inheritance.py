@@ -11,7 +11,7 @@ import pytest
 
 
 @pytest.mark.skipif(os.name == 'nt', reason='POSIX inherited SIGINT is required')
-@pytest.mark.parametrize('initial_handler', ['ignored', 'ignored_replaced', 'default', 'callable'])
+@pytest.mark.parametrize('initial_handler', ['ignored', 'ignored_replaced', 'default', 'callable', 'unknown'])
 def test_sigint_respects_previous_handler(tmp_path, initial_handler):
     script = textwrap.dedent('''\
         import os, signal, sys
@@ -33,6 +33,9 @@ def test_sigint_respects_previous_handler(tmp_path, initial_handler):
                 self.poller.start(20)
             def show(self):
                 super().show()
+                if mode == 'unknown':
+                    QTimer.singleShot(100, QApplication.instance().quit)
+                    return
                 def send_interrupt():
                     os.kill(os.getpid(), signal.SIGINT)
                     if mode == 'ignored_replaced':
@@ -51,6 +54,15 @@ def test_sigint_respects_previous_handler(tmp_path, initial_handler):
             signal.signal(signal.SIGINT, signal.default_int_handler)
         def replacement(*_args):
             pass
+        signal_calls = []
+        if mode == 'unknown':
+            real_getsignal, real_signal = signal.getsignal, signal.signal
+            def unknown_getsignal(signum):
+                return None if signum == signal.SIGINT else real_getsignal(signum)
+            def record_signal(signum, handler):
+                signal_calls.append((signum, handler))
+                return real_signal(signum, handler)
+            signal.getsignal, signal.signal = unknown_getsignal, record_signal
         previous = signal.getsignal(signal.SIGINT)
         print('previous_ignored', previous is signal.SIG_IGN, flush=True)
         try:
@@ -59,6 +71,7 @@ def test_sigint_respects_previous_handler(tmp_path, initial_handler):
             print('exit_code', exc.code, flush=True)
         print('restored', signal.getsignal(signal.SIGINT) is previous, flush=True)
         print('replacement_retained', signal.getsignal(signal.SIGINT) is replacement, flush=True)
+        print('signal_calls', len(signal_calls), flush=True)
     ''')
     env = os.environ.copy()
     env.update({
@@ -88,7 +101,9 @@ def test_sigint_respects_previous_handler(tmp_path, initial_handler):
         assert 'replacement_retained True' in completed.stdout
     else:
         assert 'restored True' in completed.stdout
-    if initial_handler in ('ignored', 'ignored_replaced'):
+    if initial_handler == 'unknown':
+        assert 'signal_calls 0' in completed.stdout
+    elif initial_handler in ('ignored', 'ignored_replaced'):
         assert 'previous_ignored True' in completed.stdout
         assert 'alive_after_sigint' in completed.stdout
     else:

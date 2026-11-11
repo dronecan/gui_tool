@@ -682,7 +682,9 @@ def main():
         QTimer.singleShot(0, window.close)
 
     previous_sigint_handler = signal.getsignal(signal.SIGINT)
-    sigint_handler_installed = previous_sigint_handler != signal.SIG_IGN
+    # None means Python does not know the original native handler, so it
+    # cannot restore it. Leave such handlers, and SIG_IGN, untouched.
+    sigint_handler_installed = previous_sigint_handler is not None and previous_sigint_handler != signal.SIG_IGN
     if sigint_handler_installed:
         signal.signal(signal.SIGINT, close_on_interrupt)
     try:
